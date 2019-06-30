@@ -1,6 +1,6 @@
 ;================================================================================================
 ;File name:		boot/include/fat12hdr.inc
-;Description:	定义描述fat12文件格式的变量
+;Description:	*定义描述fat12文件格式的变量
 ;Copyright:		Chauncey Zhang
 ;Date:		 	2019-6-28 
 ;Other:			<Orange's 一个操作系统的实现>代码解释

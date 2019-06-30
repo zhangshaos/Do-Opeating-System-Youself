@@ -1,9 +1,9 @@
 ;================================================================================================
 ;File name:		boot/include/load.inc
-;Description:	LOADER.BIN,KERNEL.BIN,页目录表,页表在物理空间的位置
+;Description:	*(LOADER.BIN,KERNEL.BIN,页目录表和页表)在物理空间的位置
 ;Copyright:		Chauncey Zhang
 ;Date:		 	2019-6-28 
-;Other:			<Orange's 一个操作系统的实现>代码解释
+;Other:			参考<Orange's 一个操作系统的实现>
 ;===============================================================================================
 
 

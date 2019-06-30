@@ -1,7 +1,7 @@
 ;================================================================================================
 ;File name:		boot/boot.asm
-;Description:	作软盘的引导扇区,搜索根目录下的LOADER.BIN文件,并将其置于内存中,
-;				之后跳转到loader.
+;Description:	*作软盘的引导扇区,搜索根目录下的LOADER.BIN文件,并将其置于内存中,
+;				*之后跳转到loader.
 ;Copyright:		Chauncey Zhang
 ;Date:		 	2019-6-28 
 ;Other:			<Orange's 一个操作系统的实现>代码解释
