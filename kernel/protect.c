@@ -1,17 +1,11 @@
-
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                              protect.c
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                                    Forrest Yu, 2005
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-/*--------------------------------------------------------------------
-路径:kernel/protest.c
-用途:
-	1.初始化8259A和idt中所有的中断门描述符
-	2.所有的中断处理程序的申明(定义在kernel.asm中)
-时间:2019-6-29-Chauncey Zhang
---------------------------------------------------------------------*/
+/*================================================================================================
+File name:		kernel/i8259.c
+Description:	*初始化IDT
+				*定义异常处理函数(中断处理函数参见kernel.asm)
+Copyright:		Chauncey Zhang
+Date:		 	2019-6-29
+Other:			参见<Orange's 一个操作系统的实现>
+===============================================================================================*/
 
 #include "type.h"
 #include "const.h"
@@ -56,6 +50,7 @@ void    hwint12();
 void    hwint13();
 void    hwint14();
 void    hwint15();
+
 
 /*======================================================================*
                             init_prot
@@ -163,13 +158,16 @@ PUBLIC void init_prot()
 
 }
 
+
 /*======================================================================*
                              init_idt_desc
- *----------------------------------------------------------------------*
- 初始化 386 中断门
+ 							初始化 386 中断门
  *======================================================================*/
-PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type,
-			  int_handler handler, unsigned char privilege)
+PRIVATE void init_idt_desc(
+	unsigned char vector,
+	u8 desc_type,
+	int_handler handler,
+	unsigned char privilege)
 {
 	GATE *	p_gate	= &idt[vector];
 	u32	base	= (u32)handler;
@@ -180,17 +178,22 @@ PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type,
 	p_gate->offset_high	= (base >> 16) & 0xFFFF;
 }
 
+
 /*======================================================================*
                             exception_handler
- *----------------------------------------------------------------------*
- 异常处理
+ 								异常处理
  *======================================================================*/
-PUBLIC void exception_handler(int vec_no,int err_code,int eip,int cs,int eflags)
+PUBLIC void exception_handler(
+	int vec_no,
+	int err_code,
+	int eip,
+	int cs,
+	int eflags)
 {
 	int i;
 	int text_color = 0x74; /* 灰底红字 */
 
-	char * err_msg[] = {"#DE Divide Error",
+	static char * err_msg[] = {"#DE Divide Error",
 			    "#DB RESERVED",
 			    "—  NMI Interrupt",
 			    "#BP Breakpoint",
@@ -213,12 +216,13 @@ PUBLIC void exception_handler(int vec_no,int err_code,int eip,int cs,int eflags)
 	};
 
 	/* 通过打印空格的方式清空屏幕的前五行，并把 disp_pos 清零 */
-	disp_pos = 0;
+	/*disp_pos = 0;
 	for(i=0;i<80*5;i++){
 		disp_str(" ");
-	}
+	}*/
 	disp_pos = 0;
 
+	disp_str("\n");
 	disp_color_str("Exception! --> ", text_color);
 	disp_color_str(err_msg[vec_no], text_color);
 	disp_color_str("\n\n", text_color);

@@ -12,12 +12,12 @@ ENTRYOFFSET	=   0x400
 
 # Programs, flags, etc.
 ASM		= nasm
-DASM		= ndisasm
+DASM	= ndisasm
 CC		= gcc
 LD		= ld
 ASMBFLAGS	= -I boot/include/
 ASMKFLAGS	= -I include/ -f elf
-CFLAGS		= -I include/ -m32 -fno-stack-protector -c -fno-builtin
+CFLAGS		= -I include/ -m32 -fno-stack-protector -c -fno-builtin	#
 LDFLAGS		= -s -m elf_i386 -Ttext $(ENTRYPOINT)
 DASMFLAGS	= -u -o $(ENTRYPOINT) -e $(ENTRYOFFSET)
 
@@ -63,6 +63,7 @@ boot/loader.bin : boot/loader.asm boot/include/load.inc \
 			boot/include/fat12hdr.inc boot/include/pm.inc
 	$(ASM) $(ASMBFLAGS) -o $@ $<
 
+# kernel.bin
 $(ORANGESKERNEL) : $(OBJS)
 	$(LD) $(LDFLAGS) -o $(ORANGESKERNEL) $(OBJS)
 
