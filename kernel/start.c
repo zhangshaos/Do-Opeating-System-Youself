@@ -22,7 +22,7 @@ Other:			参见<Orange's 一个操作系统的实现>
  *======================================================================*/
 PUBLIC void cstart()
 {
-	disp_str("cstart()");
+	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ncstart()...\n");
 
 	/* 将 LOADER 中的 GDT 复制到新的 GDT 中 */
 	memcpy(&gdt,							/* New GDT */
@@ -44,12 +44,8 @@ PUBLIC void cstart()
 	*p_idt_limit = IDT_SIZE * sizeof(GATE) - 1;
 	*p_idt_base  = (u32)&idt;
 
-	
-	disp_str("\ninit_");
 	/* 初始化两片8259A(设置中断向量号0x20...;
 	   初始化idt. */
 	init_prot();
-	static char s[]="port()\n";
-	disp_str(s);
-	
+	disp_str("\ncstart() over.\n");
 }
