@@ -24,6 +24,11 @@ global	in_byte
 disp_str:
 	push	ebp
 	mov	ebp, esp
+	push 	ebx
+	push 	esi
+	push 	edi
+	push 	eax
+
 
 	mov	esi, [ebp + 8]	; pszInfo
 	mov	edi, [disp_pos]
@@ -53,6 +58,10 @@ disp_str:
 .2:
 	mov	[disp_pos], edi
 
+	pop eax
+	pop edi
+	pop esi
+	pop ebx
 	pop	ebp
 	ret
 
@@ -62,6 +71,10 @@ disp_str:
 disp_color_str:
 	push	ebp
 	mov	ebp, esp
+	push 	ebx
+	push 	esi
+	push 	edi
+	push 	eax
 
 	mov	esi, [ebp + 8]	; pszInfo
 	mov	edi, [disp_pos]
@@ -91,6 +104,10 @@ disp_color_str:
 .2:
 	mov	[disp_pos], edi
 
+	pop eax
+	pop edi
+	pop esi
+	pop ebx
 	pop	ebp
 	ret
 
@@ -98,21 +115,37 @@ disp_color_str:
 ;                  void out_byte(u16 port, u8 value);
 ; ========================================================================
 out_byte:
-	mov	edx, [esp + 4]		; port
-	mov	al, [esp + 4 + 4]	; value
+	push ebp
+	mov ebp,esp
+	push edx
+	push eax
+
+	mov	edx, [ebp + 8]	; port
+	mov	al,	 [ebp + 12]	; value
 	out	dx, al
 	nop	; 一点延迟
 	nop
+
+	pop eax
+	pop edx
+	pop ebp
 	ret
 
 ; ========================================================================
 ;                  u8 in_byte(u16 port);
 ; ========================================================================
 in_byte:
-	mov	edx, [esp + 4]		; port
+	push ebp
+	mov ebp,esp
+	push edx
+
+	mov	edx, [ebp + 8]		; port
 	xor	eax, eax
 	in	al, dx
 	nop	; 一点延迟
 	nop
+
+	pop ebx
+	pop ebp
 	ret
 

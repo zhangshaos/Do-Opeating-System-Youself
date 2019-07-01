@@ -591,7 +591,6 @@ MemCpy:
 	pop	ecx
 	pop	edi
 	pop	esi
-	mov	esp, ebp
 	pop	ebp
 
 	ret			; 函数结束，返回

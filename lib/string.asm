@@ -27,7 +27,7 @@ memcpy:
 	mov	ecx, [ebp + 16]	; Counter
 .1:
 	cmp	ecx, 0		; 判断计数器
-	jz	.2		; 计数器为零时跳出
+	jz	.2			; 计数器为零时跳出
 
 	mov	al, [ds:esi]		; ┓
 	inc	esi					; ┃
@@ -43,7 +43,6 @@ memcpy:
 	pop	ecx
 	pop	edi
 	pop	esi
-	mov	esp, ebp
 	pop	ebp
 
 	ret			; 函数结束，返回
