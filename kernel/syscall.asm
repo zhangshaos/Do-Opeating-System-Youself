@@ -21,7 +21,8 @@ bits 32
 ;                              get_ticks
 ; ====================================================================
 get_ticks:
-	mov	eax, _NR_get_ticks
+	;没有必要保存现场
+	mov	eax, _NR_get_ticks ;给int 90h中断处理程序:系统调用传递参数.
 	int	INT_VECTOR_SYS_CALL
 	ret
 

@@ -50,5 +50,7 @@ PUBLIC void schedule();
 
 /* syscall.asm */
 PUBLIC  void    sys_call();             /* int_handler */
+/* 这个函数莫名奇妙被写到kernel.asm中了...... */
+
 PUBLIC  int     get_ticks();
 

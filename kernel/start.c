@@ -45,7 +45,7 @@ PUBLIC void cstart()
 	*p_idt_limit = IDT_SIZE * sizeof(GATE) - 1;
 	*p_idt_base  = (u32)&idt;
 
-	/* 初始化两片8259A(设置中断向量号0x20...;
+	/* 初始化两片8259A(设置中断向量号0x20...禁止所有硬件中断
 	   初始化idt, gdt中的tss和ldt */
 	init_prot();
 

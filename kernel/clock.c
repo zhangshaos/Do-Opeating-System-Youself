@@ -21,7 +21,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 PUBLIC void clock_handler(int irq)
 {
 	ticks++;
-	p_proc_ready->ticks--;
+	p_proc_ready->ticks--;	/* 减少正在运行的进程的剩余ticks */
 
 	if (k_reenter != 0) /* 发生中断重入的时候, 不进行进程调度 */
 	{
@@ -39,6 +39,8 @@ PUBLIC void clock_handler(int irq)
 
 /*======================================================================*
                               milli_delay
+	===================================================================
+						安装10ms的数量级进行延迟
  *======================================================================*/
 PUBLIC void milli_delay(int milli_sec)
 {

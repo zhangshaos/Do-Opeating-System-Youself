@@ -166,9 +166,11 @@ in_byte:
 ;		out_byte(INT_S_CTLMASK, in_byte(INT_S_CTLMASK) | (1 << irq));
 ;	}
 disable_irq:
-		push ecx						;保存现场
+		push 	ebp
+		mov 	ebp, esp
+		push	ecx						;保存现场
 
-        mov     ecx, [esp + 4]          ; irq
+        mov     ecx, [ebp + 8]          ; irq
         pushf							; 压栈eflag
         cli
         mov     ah, 1
@@ -196,12 +198,14 @@ disable_8:
         mov     eax, 1                  ; disabled by this function
 
 		pop ecx
+		pop ebp
         ret
 dis_already:
         popf
         xor     eax, eax                ; already disabled
 
 		pop ecx
+		pop ebp
         ret
 
 ; ========================================================================
@@ -217,10 +221,12 @@ dis_already:
 ;       }
 ;
 enable_irq:
-		push ecx						;保存现场
-		push eax
+		push 	ebp
+		mov 	ebp, esp
+		push	ecx						;保存现场
+		push	eax
 
-        mov     ecx, [esp + 4]          ; irq
+        mov     ecx, [ebp + 8]          ; irq
         pushf
         cli
         mov     ah, ~1
@@ -235,6 +241,7 @@ enable_0:
 
 		pop eax
 		pop ecx
+		pop ebp
         ret
 enable_8:
         in      al, INT_S_CTLMASK
@@ -244,6 +251,7 @@ enable_8:
 
 		pop eax
 		pop ecx
+		pop ebp
         ret
 
 

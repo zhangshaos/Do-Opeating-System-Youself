@@ -15,10 +15,10 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
 
-EXTERN	int		disp_pos;
-EXTERN	u8		gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
+EXTERN	int		    disp_pos;
+EXTERN	u8		    gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	DESCRIPTOR	gdt[GDT_SIZE];
-EXTERN	u8		idt_ptr[6];	/* 0~15:Limit  16~47:Base */
+EXTERN	u8		    idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	GATE		idt[IDT_SIZE];
 
 EXTERN	u32		k_reenter;	/* 0:not reenter interupting or exception, -1 or other:reenter.*/

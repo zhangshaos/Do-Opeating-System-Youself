@@ -42,6 +42,7 @@ StackTop:		; 栈顶
 
 [section .text]	; 代码在此
 
+;导出相关符号
 global _start	; 导出 _start
 
 global restart
@@ -159,7 +160,10 @@ csinit:
 
 ; =====================================硬件中断处理宏定义(主片)====================================
 %macro	hwint_master	1
-	call	save
+	;如果是ring1-3中断,则在PCB中保存低特权级环境(优先级切换时,ESP变成TSS.esp->PCB)
+	;如果是ring0的中断重入,则在内核栈中save
+	call	save			;save结束后,已经切换到内核栈了
+
 	in	al, INT_M_CTLMASK	; `.
 	or	al, (1 << %1)		;  | 屏蔽当前中断
 	out	INT_M_CTLMASK, al	; /
@@ -170,10 +174,11 @@ csinit:
 	call	[irq_table + 4 * %1]	;  | 中断处理程序
 	pop	ecx							; /
 	cli
+
 	in	al, INT_M_CTLMASK	; `.
 	and	al, ~(1 << %1)		;  | 恢复接受当前中断
 	out	INT_M_CTLMASK, al	; /
-	ret
+	ret						;由于save中push restart,所以这个ret返回到restart.
 %endmacro
 ; ============================================================================================
 
@@ -331,12 +336,12 @@ exception:
 ; ====================================================================================
 ;                                   save
 ; ====================================================================================
-;							进程切换时,保存现场
+;					进程切换时,保存现场(注意此时使用的是TSS.esp->PCB,在restart中初始化)
 ; ====================================================================================
 save:
         pushad          ; `.
         push    ds      ;  |
-        push    es      ;  | 保存原寄存器值
+        push    es      ;  | 保存原寄存器值,保存在PCB中
         push    fs      ;  |
         push    gs      ; /
         mov     dx, ss
@@ -348,13 +353,16 @@ save:
         inc     dword [k_reenter]           ;k_reenter++;
         cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
         jne     .1                          ;{
+		;切换到内核栈
         mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
         push    restart                     ;  push restart
         jmp     [esi + RETADR - P_STACKBASE];  return;
 .1:                                         ;} else { 已经在内核栈，不需要再切换
+		;已经在内核栈了
         push    restart_reenter             ;  push restart_reenter
         jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
+
 
 
 ; ====================================================================================
@@ -363,7 +371,9 @@ save:
 ;									系统调用
 ; ====================================================================================
 sys_call:
-        call    save
+		;如果是ring1-3中断,则在PCB中保存低特权级环境(优先级切换时,ESP变成TSS.esp->PCB)
+		;如果是ring0的中断重入,则在内核栈中save
+        call    save	;切换到内核栈了
 
         sti
 
@@ -372,27 +382,33 @@ sys_call:
 
         cli
 
-        ret
+        ret		;由于save中push restart,所以这个ret返回到restart.
 
 
 ; ====================================================================================
 ;				    restart
 ; ====================================================================================
 ;			1.完成ring0->ring1,返回到task
-;			2.中断重新进入
+;			2.系统调用从这里返回task(使用PCB)
+;			3.这玩意是核心代码之一,中断都ret到这里,然后从这里返回到ring1-3
 ; ====================================================================================
+;第一次中断(没有发生中断重入)
 restart:
-	mov	esp, [p_proc_ready]
+	;离开内核栈
+	mov	esp, [p_proc_ready]				;从此开始esp指向的是PCB
 	lldt	[esp + P_LDT_SEL]
 	lea	eax, [esp + P_STACKTOP]
-	mov	dword [tss + TSS3_S_SP0], eax
+	mov	dword [tss + TSS3_S_SP0], eax	;为下次的特权级切换(ring1-3->ring0)准备
+
+;中断重入
 restart_reenter:
 	dec	dword [k_reenter]
+	;出栈的是PCB中的信息(第一次中断) or 内核栈(中断重入)
 	pop	gs
 	pop	fs
 	pop	es
 	pop	ds
 	popad
 	add	esp, 4	;跳过PCB中retaddr
-	iretd
+	iretd		;当ret是有特权级切换的返回时(看cs的DPL),会顺便切换PCB中的ss和esp()
 
