@@ -11,6 +11,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "protect.h"
 #include "proto.h"
 #include "string.h"
+#include "proc.h"
 #include "global.h"
 
 
@@ -23,7 +24,7 @@ PUBLIC char * itoa(char * str, int num)
 	char *	p = str;
 	char	ch;
 	int	i;
-	int	flag = 0;
+	int	flag = FALSE;
 
 	*p++ = '0';
 	*p++ = 'x';
@@ -37,9 +38,8 @@ PUBLIC char * itoa(char * str, int num)
 		for(i=28;i>=0;i-=4)
 		{
 			ch = (num >> i) & 0xF;
-			if(flag || (ch > 0))
-			{
-				flag = 1;
+			if(flag || (ch > 0)){
+				flag = TRUE;
 				ch += '0';
 				if(ch > '9')
 				{
@@ -63,4 +63,21 @@ PUBLIC void disp_int(int input)
 	char output[16];
 	itoa(output, input);
 	disp_str(output);
+}
+
+/*======================================================================*
+                               delay
+ *======================================================================*/
+PUBLIC void delay(int time)
+{
+	int i, j, k;
+	for(k=0;k<time;k++){
+		/*for(i=0;i<10000;i++){	for Virtual PC	*/
+		for(i=0;i<10;i++){/*	for Bochs	*/
+			for(j=0;j<10000;j++)
+			{
+				//nop
+			}
+		}
+	}
 }

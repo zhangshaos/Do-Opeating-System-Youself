@@ -3,7 +3,7 @@ File name:		kernel/start.c
 Description:	*将GDT从loader中移动到kernel中
 				*初始化8259A和IDT
 Copyright:		Chauncey Zhang
-Date:		 	2019-6-29
+Date:		 	2019-7-14
 Other:			参见<Orange's 一个操作系统的实现>
 ===============================================================================================*/
 
@@ -12,17 +12,18 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "protect.h"
 #include "proto.h"
 #include "string.h"
+#include "proc.h"
 #include "global.h"
 
 
 /*======================================================================*
                             cstart
 				1.将gdt从loader中移到kernel中,
-				2.初始化idt.
+				2.初始化idt,gdt中的tss和idt
  *======================================================================*/
 PUBLIC void cstart()
 {
-	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ncstart()...\n");
+	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n-----\"cstart\" begins-----\n");
 
 	/* 将 LOADER 中的 GDT 复制到新的 GDT 中 */
 	memcpy(&gdt,							/* New GDT */
@@ -45,7 +46,8 @@ PUBLIC void cstart()
 	*p_idt_base  = (u32)&idt;
 
 	/* 初始化两片8259A(设置中断向量号0x20...;
-	   初始化idt. */
+	   初始化idt, gdt中的tss和ldt */
 	init_prot();
-	disp_str("\ncstart() over.\n");
+
+	disp_str("-----\"cstart\" finished-----\n");
 }

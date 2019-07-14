@@ -13,8 +13,21 @@ Other:			参见<Orange's 一个操作系统的实现>
 #define	EXTERN
 #endif
 
+EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
+
 EXTERN	int		disp_pos;
 EXTERN	u8		gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	DESCRIPTOR	gdt[GDT_SIZE];
 EXTERN	u8		idt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	GATE		idt[IDT_SIZE];
+
+EXTERN	u32		k_reenter;	/* 0:not reenter interupting or exception, -1 or other:reenter.*/
+
+EXTERN	TSS		tss;                /* task  status segement */
+EXTERN	PROCESS*	p_proc_ready;	/* point to the ready process table for invoking*/
+
+extern	PROCESS		proc_table[];	/* array of PCB */
+extern	char		task_stack[];	/* stack that can be divided for all tasks */
+extern  TASK            task_table[];	/* array of description for all tasks */
+extern	irq_handler	irq_table[];	/* array of interupt handler */
+

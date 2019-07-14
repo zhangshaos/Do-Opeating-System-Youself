@@ -2,23 +2,39 @@
 ;File name:		kernel/kernel.asm
 ;Description:	*内核
 ;				*定义了全部的中断处理程序
+;				*定义了中断重入需要的代码
+;				*定义了系统调用接口
 ;Copyright:		Chauncey Zhang
 ;Date:		 	2019-6-29
 ;Other:			参见<Orange's 一个操作系统的实现>
 ;===============================================================================================
 
-SELECTOR_KERNEL_CS	equ	8
+
+%include "sconst.inc"
 
 ; 导入函数
 extern	cstart
+extern	kernel_main
 extern	exception_handler
 extern	spurious_irq
+extern	clock_handler
+extern	disp_str
+extern	delay
+extern	irq_table
 
 ; 导入全局变量
 extern	gdt_ptr
 extern	idt_ptr
+extern	p_proc_ready
+extern	tss
 extern	disp_pos
+extern	k_reenter
+extern	sys_call_table
 
+bits 32
+
+[SECTION .data]
+clock_int_msg		db	"^", 0
 
 [SECTION .bss]
 StackSpace		resb	2 * 1024
@@ -27,6 +43,9 @@ StackTop:		; 栈顶
 [section .text]	; 代码在此
 
 global _start	; 导出 _start
+
+global restart
+global sys_call
 
 global	divide_error
 global	single_step_exception
@@ -117,8 +136,13 @@ _start:
 
 	jmp	SELECTOR_KERNEL_CS:csinit
 csinit:
-	sti
-	hlt
+
+	xor	eax, eax
+	mov	ax, SELECTOR_TSS
+	ltr	ax
+	jmp	kernel_main
+
+
 
 ;========================================kernel结束==========================================
 
@@ -129,15 +153,29 @@ csinit:
 
 
 ;========================================定义中断处理程序======================================
-; 中断和异常 -- 硬件中断
-; ---------------------------------
-%macro  hwint_master    1
-        push    %1
-        call    spurious_irq
-        add     esp, 4
-        hlt
+; (1).中断和异常 -- 硬件中断
+
+
+
+; =====================================硬件中断处理宏定义(主片)====================================
+%macro	hwint_master	1
+	call	save
+	in	al, INT_M_CTLMASK	; `.
+	or	al, (1 << %1)		;  | 屏蔽当前中断
+	out	INT_M_CTLMASK, al	; /
+	mov	al, EOI				; `. 置EOI位
+	out	INT_M_CTL, al		; /
+	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
+	push	%1						; `.
+	call	[irq_table + 4 * %1]	;  | 中断处理程序
+	pop	ecx							; /
+	cli
+	in	al, INT_M_CTLMASK	; `.
+	and	al, ~(1 << %1)		;  | 恢复接受当前中断
+	out	INT_M_CTLMASK, al	; /
+	ret
 %endmacro
-; ---------------------------------
+; ============================================================================================
 
 ALIGN   16	;为什么这里需要按16字节对齐?
 hwint00:                ; Interrupt routine for irq 0 (the clock).
@@ -171,14 +209,17 @@ ALIGN   16
 hwint07:                ; Interrupt routine for irq 7 (printer)
         hwint_master    7
 
-; ---------------------------------
+
+
+
+; ==================================硬件中断处理宏定义(从片)====================================
 %macro  hwint_slave     1
         push    %1
         call    spurious_irq
         add     esp, 4
         hlt
 %endmacro
-; ---------------------------------
+; ==========================================================================================
 
 ALIGN   16
 hwint08:                ; Interrupt routine for irq 8 (realtime clock).
@@ -214,7 +255,9 @@ hwint15:                ; Interrupt routine for irq 15
 
 
 
-; 中断和异常 -- 异常
+
+; ===========================================================================================
+; (2).中断和异常 -- 异常
 divide_error:
 	push	0xFFFFFFFF	; no err code
 	push	0		; vector_no	= 0
@@ -278,5 +321,78 @@ exception:
 	call	exception_handler
 	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
 	hlt
-
 ;======================================中断处理程序END========================================
+
+
+
+
+
+
+; ====================================================================================
+;                                   save
+; ====================================================================================
+;							进程切换时,保存现场
+; ====================================================================================
+save:
+        pushad          ; `.
+        push    ds      ;  |
+        push    es      ;  | 保存原寄存器值
+        push    fs      ;  |
+        push    gs      ; /
+        mov     dx, ss
+        mov     ds, dx
+        mov     es, dx
+
+        mov     esi, esp                    ;esi = 进程表(PCB)起始地址
+
+        inc     dword [k_reenter]           ;k_reenter++;
+        cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
+        jne     .1                          ;{
+        mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+        push    restart                     ;  push restart
+        jmp     [esi + RETADR - P_STACKBASE];  return;
+.1:                                         ;} else { 已经在内核栈，不需要再切换
+        push    restart_reenter             ;  push restart_reenter
+        jmp     [esi + RETADR - P_STACKBASE];  return;
+                                            ;}
+
+
+; ====================================================================================
+;                                 sys_call
+; ====================================================================================
+;									系统调用
+; ====================================================================================
+sys_call:
+        call    save
+
+        sti
+
+        call    [sys_call_table + eax * 4]
+        mov     [esi + EAXREG - P_STACKBASE], eax
+
+        cli
+
+        ret
+
+
+; ====================================================================================
+;				    restart
+; ====================================================================================
+;			1.完成ring0->ring1,返回到task
+;			2.中断重新进入
+; ====================================================================================
+restart:
+	mov	esp, [p_proc_ready]
+	lldt	[esp + P_LDT_SEL]
+	lea	eax, [esp + P_STACKTOP]
+	mov	dword [tss + TSS3_S_SP0], eax
+restart_reenter:
+	dec	dword [k_reenter]
+	pop	gs
+	pop	fs
+	pop	es
+	pop	ds
+	popad
+	add	esp, 4	;跳过PCB中retaddr
+	iretd
+

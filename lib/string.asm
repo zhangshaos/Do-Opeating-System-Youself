@@ -1,6 +1,6 @@
 ;================================================================================================
-;File name:		lib/klib.c
-;Description:	*部分函数库(非底层函数)
+;File name:		lib/string.asm
+;Description:	*内存操作函数,memXXX
 ;Copyright:		Chauncey Zhang
 ;Date:		 	2019-6-29
 ;Other:			参见<Orange's 一个操作系统的实现>
@@ -9,6 +9,8 @@
 
 ; 导出函数
 global	memcpy
+global	memset
+global  strcpy
 
 
 ; ===========================================================
@@ -46,3 +48,72 @@ memcpy:
 	pop	ebp
 
 	ret			; 函数结束，返回
+; memcpy 结束-------------------------------------------------------------
+
+
+; ------------------------------------------------------------------------
+; void memset(void* p_dst, char ch, int size);
+; ------------------------------------------------------------------------
+memset:
+	push	ebp
+	mov	ebp, esp
+
+	push	esi
+	push	edi
+	push	ecx
+
+	mov	edi, [ebp + 8]	; Destination
+	mov	edx, [ebp + 12]	; Char to be putted
+	mov	ecx, [ebp + 16]	; Counter
+.1:
+	cmp	ecx, 0		; 判断计数器
+	jz	.2		; 计数器为零时跳出
+
+	mov	byte [edi], dl		; ┓
+	inc	edi			; ┛
+
+	dec	ecx		; 计数器减一
+	jmp	.1		; 循环
+.2:
+
+	pop	ecx
+	pop	edi
+	pop	esi
+	pop	ebp
+
+	ret			; 函数结束，返回
+; ------------------------------------------------------------------------
+
+
+; ------------------------------------------------------------------------
+; char* strcpy(char* p_dst, char* p_src);
+; ------------------------------------------------------------------------
+strcpy:
+	push    ebp
+	mov     ebp, esp
+
+	push	esi
+	push 	edi
+
+	mov     esi, [ebp + 12] ; Source
+	mov     edi, [ebp + 8]  ; Destination
+
+.1:
+	mov     al, [esi]               ; ┓
+	inc     esi                     ; ┃
+									; ┣ 逐字节移动
+	mov     byte [edi], al          ; ┃
+	inc     edi                     ; ┛
+
+	cmp     al, 0           ; 是否遇到 '\0'
+	jnz     .1              ; 没遇到就继续循环，遇到就结束
+
+	mov     eax, [ebp + 8]  ; 返回值
+
+	pop 	edi
+	pop 	esi
+	pop     ebp
+	ret                     ; 函数结束，返回
+; strcpy 结束-------------------------------------------------------------
+
+
