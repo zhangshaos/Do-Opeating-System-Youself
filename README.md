@@ -2,7 +2,7 @@
 
 # Do-Opeating-System-Youself
 
-Developer environment:
+## Developer environment:
 
 * Ubuntu 18.04.2 LTS
 
@@ -12,4 +12,37 @@ Developer environment:
 
 * Bochs x86 Emulator 2.6.9 (source version with debugger)
 
-  ==WARNING== : Bochs must to be source version where you can debug your own OS.
+  **WARNING** : *Bochs must to be source version where you can debug your own OS.*
+
+
+
+
+## Dir strucure:
+* boot/ : 软盘引导-boot.asm; 内核引导-loader.asm
+
+* include/ : 内核需要的头文件 : 
+> 1. const.h & proc.h & protect.h & sconst.inc & type.h : 数据结构和常量
+> 2. global.h : 全局变量定义
+> 3. proto.h & string.h : 函数原型申明
+
+* kernel/ : 
+> 1. global.c : 全局变量定义
+> 2. clock.c & i8259.c & proc.c & protect.c & start.c & syscall.asm : proto.h中申明的函数定义
+> 3. kernel.asm : 内核
+> 4. main.c : 多进程PCB初始化,跳入执行进程
+
+* lib/ : 
+> 1. kliba.asm : 可重用的asm函数
+> 2. string.asm : 内存操作函数
+> 3. klib.c : ......
+
+
+
+
+## 主要更新进度:
+......
+### 19年7月14日更新:添加了多进程
+> 看restart()函数(kernel.asm)
+
+
+

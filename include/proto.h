@@ -1,6 +1,6 @@
 /*================================================================================================
 File name:		include/proto.h
-Description:	*通用I/O函数的原型
+Description:	*函数的原型
 Copyright:		Chauncey Zhang
 Date:		 	2019-6-29
 Other:			参见<Orange's 一个操作系统的实现>
@@ -20,7 +20,6 @@ PUBLIC void	init_prot();
 PUBLIC u32	seg2phys(u16 seg);
 
 /* klib.c */
-PUBLIC void	delay(int time);
 PUBLIC char * itoa(char * str, int num);
 PUBLIC void disp_int(int input);
 
