@@ -13,6 +13,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "proto.h"
 #include "proc.h"
 #include "global.h"
+#include "string.h" /* 提供memXXX函数 */
 
 
 /* 本文件内函数声明 */
