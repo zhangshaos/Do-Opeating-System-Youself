@@ -1,19 +1,16 @@
 /*================================================================================================
 File name:		kernel/proc.c
-Description:	*进程调度
-				*系统调用定义
+Description:	*定义进程调度函数
 Copyright:		Chauncey Zhang
 Date:		 	2019-7-14
-Other:			参见<Orange's 一个操作系统的实现>
 ===============================================================================================*/
 
-#include "type.h"
-#include "const.h"
-#include "protect.h"
-#include "proto.h"
-#include "string.h"
-#include "proc.h"
-#include "global.h"
+
+#include"const.h"
+#include"struct_proc.h"
+#include"global.h"
+#include"func_proto.h"
+
 
 /*======================================================================*
                               schedule
@@ -44,11 +41,43 @@ PUBLIC void schedule()
 	}
 }
 
+
+
+
+
+
 /*======================================================================*
-                           sys_get_ticks
+                               TestA
  *======================================================================*/
-PUBLIC int sys_get_ticks()
+void TestA()
 {
-	return ticks;
+	int i = 0;
+	while (1) {
+		disp_str("A.");
+		milli_delay(1000);
+	}
 }
 
+/*======================================================================*
+                               TestB
+ *======================================================================*/
+void TestB()
+{
+	int i = 0x1000;
+	while(1){
+		disp_str("B.");
+		milli_delay(1000);
+	}
+}
+
+/*======================================================================*
+                               TestC
+ *======================================================================*/
+void TestC()
+{
+	int i = 0x2000;
+	while(1){
+		disp_str("C.");
+		milli_delay(1000);
+	}
+}

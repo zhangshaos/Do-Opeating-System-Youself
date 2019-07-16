@@ -1,33 +1,54 @@
 /*================================================================================================
 File name:		include/global.h
-Description:	*定义全局变量
-                (如果定义了宏GLOBAL_VARIABLES_HERE,则该编译单元中全局变量视为global;否则视为external)
+Description:	*全局变量(所有在global.c中定义的变量)申明
 Copyright:		Chauncey Zhang
-Date:		 	2019-6-29
-Other:			参见<Orange's 一个操作系统的实现>
+Date:		 	2019-7-15
 ===============================================================================================*/
 
-/* EXTERN is defined as extern except in global.c */
-#ifdef	GLOBAL_VARIABLES_HERE
-#undef	EXTERN
-#define	EXTERN
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
+
+#include"struct_descript.h"
+#include"struct_proc.h"
+#include"type.h"
+
+/* system clock offered by 8254 chips.(every tick means about 10ms)*/
+extern	int		ticks;
+
+/* the position of writting directly video memory. */
+extern	int		disp_pos;
+
+/* GDTR(loaded by lgdt) and GDT */
+extern	u8		    gdt_ptr[];	/* 0~15:Limit  16~47:Base */
+extern	DESCRIPTOR	gdt[];
+
+/* IDTR(loaded by lidt) and IDT */
+extern	u8		    idt_ptr[];	/* 0~15:Limit  16~47:Base */
+extern	GATE		idt[];
+
+/* 0:not reenter interupting or exception, -1 or other:reenter.*/
+extern	u32		k_reenter;
+
+/* task  status segement */
+extern	TSS		tss;
+
+/* point to the ready process table for invoking*/
+extern	PROCESS*	p_proc_ready;
+
+/* array of all PCBs */
+extern	PROCESS		proc_table[];
+
+/* descriptions for all Tasks */
+extern	TASK		task_table[];
+
+/* isolated stack for all Tasks, divided by every Task*/
+extern	char		task_stack[];
+
+/* all hardware interruption handler */
+extern	irq_handler	irq_table[];
+
+/* customed system call (int 90h) handler */
+extern	system_call	sys_call_table[];
+
+
 #endif
-
-EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
-
-EXTERN	int		    disp_pos;
-EXTERN	u8		    gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
-EXTERN	DESCRIPTOR	gdt[GDT_SIZE];
-EXTERN	u8		    idt_ptr[6];	/* 0~15:Limit  16~47:Base */
-EXTERN	GATE		idt[IDT_SIZE];
-
-EXTERN	u32		k_reenter;	/* 0:not reenter interupting or exception, -1 or other:reenter.*/
-
-EXTERN	TSS		tss;                /* task  status segement */
-EXTERN	PROCESS*	p_proc_ready;	/* point to the ready process table for invoking*/
-
-extern	PROCESS		proc_table[];	/* array of PCB */
-extern	char		task_stack[];	/* stack that can be divided for all tasks */
-extern  TASK            task_table[];	/* array of description for all tasks */
-extern	irq_handler	irq_table[];	/* array of interupt handler */
-

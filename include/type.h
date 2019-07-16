@@ -1,24 +1,23 @@
 /*================================================================================================
 File name:		include/type.h
-Description:	*定义某种类型的别名
+Description:	*typedef
 Copyright:		Chauncey Zhang
-Date:		 	2019-6-29
-Other:			参见<Orange's 一个操作系统的实现>
+Date:		 	2019-7-15
 ===============================================================================================*/
 
-#ifndef	_ORANGES_TYPE_H_
-#define	_ORANGES_TYPE_H_
+
+#ifndef __TYPE_H__
+#define __TYPE_H__
 
 
-typedef	unsigned int		u32;
-typedef	unsigned short		u16;
-typedef	unsigned char		u8;
+typedef	unsigned int	u32;
+typedef	unsigned short	u16;
+typedef	unsigned char	u8;
 
-typedef	void	(*int_handler)	();
-typedef	void	(*task_f)	();
-typedef	void	(*irq_handler)	(int irq);
-
+typedef	void	(*int_handler)();
+typedef	void	(*task_f)();
+typedef	void	(*irq_handler)(int irq);
 typedef void*	system_call;
 
 
-#endif /* _ORANGES_TYPE_H_ */
+#endif

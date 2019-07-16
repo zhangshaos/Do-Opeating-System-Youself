@@ -1,15 +1,51 @@
 /*================================================================================================
-File name:		include/proc.h
+File name:		include/struct_proc.h
 Description:	*定义描述进程的结构
 Copyright:		Chauncey Zhang
 Date:		 	2019-7-13
-Other:			参见<Orange's 一个操作系统的实现>
 ===============================================================================================*/
 
-/*
+
+
+#ifndef __PROCESS_H__
+#define __PROCESS_H__
+
 #include"type.h"
-#include"protect.h"
- */
+#include"const.h"
+#include"struct_descript.h"
+
+/* 任务状态段 */
+typedef struct s_tss {
+	u32	backlink;
+	u32	esp0;		/* stack pointer to use during interrupt */
+	u32	ss0;		/*   "   segment  "  "    "        "     */
+	u32	esp1;
+	u32	ss1;
+	u32	esp2;
+	u32	ss2;
+	u32	cr3;
+	u32	eip;
+	u32	flags;
+	u32	eax;
+	u32	ecx;
+	u32	edx;
+	u32	ebx;
+	u32	esp;
+	u32	ebp;
+	u32	esi;
+	u32	edi;
+	u32	es;
+	u32	cs;
+	u32	ss;
+	u32	ds;
+	u32	fs;
+	u32	gs;
+	u32	ldt;
+	u16	trap;
+	u16	iobase;	/* I/O位图基址大于或等于TSS段界限，就表示没有I/O许可位图 */
+	/*u8	iomap[2];*/
+}TSS;
+
 
 typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	gs;			/* ┓						│			*/
@@ -32,22 +68,25 @@ typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	ss;			/*  ┛						┷High			*/
 }STACK_FRAME;
 
-/* 类似进程控制块PCB */
+/* 进程 */
 typedef struct s_proc {
 	STACK_FRAME regs;          /* process registers saved in stack frame */
 
 	u16 ldt_sel;               /* gdt selector giving ldt base and limit */
-	DESCRIPTOR ldts[LDT_SIZE]; /* local descriptors for code and data */
+	
+	/* LDT */
+	DESCRIPTOR ldts[LDT_SIZE]; 
 
-        int ticks;                 /* remained ticks */
-        int priority;
+    int ticks;                 /* remained ticks */
+    int priority;
 
 	u32 pid;                   /* process id passed in from MM */
 	char p_name[16];           /* name of the process */
 }PROCESS;
 
-/* Task描述结构 */
-typedef struct s_task {
+
+/* Task */
+typedef struct s_tatask_fsk {
 	task_f	initial_eip;
 	int	stacksize;
 	char	name[32];
@@ -61,8 +100,7 @@ typedef struct s_task {
 #define STACK_SIZE_TESTA	0x8000
 #define STACK_SIZE_TESTB	0x8000
 #define STACK_SIZE_TESTC	0x8000
+#define STACK_SIZE_TOTAL	(STACK_SIZE_TESTA + STACK_SIZE_TESTB + STACK_SIZE_TESTC)
 
-#define STACK_SIZE_TOTAL	(STACK_SIZE_TESTA + \
-				STACK_SIZE_TESTB + \
-				STACK_SIZE_TESTC)
 
+#endif

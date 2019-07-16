@@ -1,34 +1,70 @@
 /*================================================================================================
 File name:		kernel/global.c
-Description:	*将global.h中的全局变量定义在这里
+Description:	*全局变量定义处
 Copyright:		Chauncey Zhang
-Date:		 	2019-6-29
-Other:			参见<Orange's 一个操作系统的实现>
+Date:		 	2019-7-15
 ===============================================================================================*/
 
-#define GLOBAL_VARIABLES_HERE
 
-#include "type.h"
-#include "const.h"
-#include "protect.h"
-#include "proto.h"
-#include "proc.h"
-#include "global.h"
+#include"const.h"
+#include"type.h"
+#include"struct_descript.h"
+#include"struct_proc.h"
+#include"const_interrupt.h"
+#include"func_proto.h"
 
 
-PUBLIC	PROCESS			proc_table[NR_TASKS];
 
-PUBLIC	char			task_stack[STACK_SIZE_TOTAL];
+/* system clock offered by 8254 chips.(every tick means about 10ms)*/
+PUBLIC	int		ticks;
 
-PUBLIC	TASK	task_table[NR_TASKS] = {
+
+/* the position of writting directly video memory. */
+PUBLIC	int		disp_pos;
+
+
+/* GDTR(loaded by lgdt) and GDT */
+PUBLIC	u8		    gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
+PUBLIC	DESCRIPTOR	gdt[GDT_SIZE];
+
+/* IDTR(loaded by lidt) and IDT */
+PUBLIC	u8		    idt_ptr[6];	/* 0~15:Limit  16~47:Base */
+PUBLIC	GATE		idt[IDT_SIZE];
+
+
+/* 0:not reenter interupting or exception, -1 or other:reenter.*/
+PUBLIC	u32		k_reenter;
+
+
+/* task  status segement */
+PUBLIC	TSS		tss;
+
+
+/* point to the ready process table for invoking*/
+PUBLIC	PROCESS*	p_proc_ready;
+
+
+/* array of all PCBs */
+PUBLIC	PROCESS		proc_table[NR_TASKS];
+
+
+/* descriptions for all Tasks */
+PUBLIC	TASK		task_table[NR_TASKS] = {
 	{TestA, STACK_SIZE_TESTA, "TestA"},
 	{TestB, STACK_SIZE_TESTB, "TestB"},
 	{TestC, STACK_SIZE_TESTC, "TestC"}
 	};
 
-PUBLIC	irq_handler		irq_table[NR_IRQ];
+/* isolated stack for all Tasks, divided by every Task*/
+PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC	system_call		sys_call_table[NR_SYS_CALL] = {
+
+/* all hardware interruption handler */
+PUBLIC	irq_handler	irq_table[NR_IRQ];
+
+
+/* customed system call (int 90h) handler */
+PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
 	sys_get_ticks
 	};
 

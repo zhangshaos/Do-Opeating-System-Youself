@@ -1,18 +1,16 @@
 /*================================================================================================
 File name:		kernel/clock.c
-Description:	*定义和时钟有关的高层函数
+Description:	*定义时钟中断处理程序
+				*定义其他与时钟相关的底层函数
 Copyright:		Chauncey Zhang
 Date:		 	2019-7-14
-Other:			参见<Orange's 一个操作系统的实现>
 ===============================================================================================*/
 
-#include "type.h"
-#include "const.h"
-#include "protect.h"
-#include "proto.h"
-#include "string.h"
-#include "proc.h"
-#include "global.h"
+
+#include"const.h"
+#include"global.h"
+#include"func_proto.h"
+#include"const_interrupt.h"
 
 
 /*======================================================================*
@@ -33,9 +31,10 @@ PUBLIC void clock_handler(int irq)
 		return;
 	}
 
+	/* 进程调度 */
 	schedule();
-
 }
+
 
 /*======================================================================*
                               milli_delay
@@ -44,11 +43,21 @@ PUBLIC void clock_handler(int irq)
  *======================================================================*/
 PUBLIC void milli_delay(int milli_sec)
 {
-        int t = get_ticks();
+        int t = ticks;	/* 此处直接引用ticks,而不是使用get_ticks()系统调用,是为了时钟精确性 */
 
-        while(((get_ticks() - t) * 1000 / HZ) < milli_sec) 
+        while(((ticks - t) * 1000 / HZ) < milli_sec) 
 		{
 			/* nop */
 		}
 }
 
+
+/*======================================================================*
+                           sys_get_ticks
+	==================================================================
+		系统调用get_tichs()->INT中断->sys_call()->sys_get_ticks()
+ *======================================================================*/
+PUBLIC int sys_get_ticks()
+{
+	return ticks;
+}

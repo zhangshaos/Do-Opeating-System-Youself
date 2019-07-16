@@ -1,28 +1,70 @@
-;================================================================================================
+;===============================================================================================
 ;File name:		kernel/syscall.asm
-;Description:	*get_ticks()定义
+;Description:	*定义各系统调用
 ;Copyright:		Chauncey Zhang
-;Date:		 	2019-7-14
-;Other:			参见<Orange's 一个操作系统的实现>
+;Date:		 	2019-7-16
 ;===============================================================================================
 
-%include "sconst.inc"
 
-_NR_get_ticks       equ 0 ; 要跟 global.c 中 sys_call_table 的定义相对应！
-INT_VECTOR_SYS_CALL equ 0x90
+%include "const.inc"
+
+INT_VECTOR_SYS_CALL equ     0x90    ;参考interruptor.c中的定义
+ID_GET_TICKS        equ     0x0     ;sys_call_table[]中索引
+
+; 导入符号
+extern  save
+extern  sys_call_table
+
+
+[section .text]
 
 ; 导出符号
-global	get_ticks
+global  get_ticks
+global  sys_call
 
-bits 32
-[section .text]
+
+; ===============================系统调用定义=====================================================
+; 系统调用流程图:
+; 系统调用(ring 1-3) -> 中断INT 90H -> 进入ring 0 -> sys_call() -> sys_call_table[]里面的sys_XXX() ------ return sys_call() -> return restart() -> 中断返回
 
 ; ====================================================================
 ;                              get_ticks
 ; ====================================================================
 get_ticks:
 	;没有必要保存现场
-	mov	eax, _NR_get_ticks ;给int 90h中断处理程序:系统调用传递参数.
-	int	INT_VECTOR_SYS_CALL
+	mov	eax, ID_GET_TICKS 	;给int 90h中断处理程序:系统调用传递参数.
+	int	INT_VECTOR_SYS_CALL	;中断调用sys_call() 
 	ret
+
+
+
+
+
+
+
+
+
+
+; ==============================系统调用 OVER=====================================================
+
+
+; ======================================================================
+;                                 sys_call
+;   =================================================================
+;               系统调用int	INT_VECTOR_SYS_CALL中断服务程序
+; ======================================================================
+sys_call:
+		;如果是ring1-3中断,则在PCB中保存低特权级环境(优先级切换时,ESP变成TSS.esp->PCB)
+		;如果是ring0的中断重入,则在内核栈中save
+        call    save	;切换到内核栈了
+
+        sti
+
+        call    [sys_call_table + eax * 4]
+        mov     [esi + EAXREG - P_STACKBASE], eax   ;procsss->EAX = eax
+
+        cli
+
+        ret		;由于save中push restart,所以这个ret返回到restart.
+                ;restart将procss->EAX作返回值,并且中断返回iretd返回int	INT_VECTOR_SYS_CALL处
 

@@ -3,16 +3,11 @@ File name:		lib/klib.c
 Description:	*常规函数库(非底层函数)
 Copyright:		Chauncey Zhang
 Date:		 	2019-6-29
-Other:			参见<Orange's 一个操作系统的实现>
 ===============================================================================================*/
 
-#include "type.h"
-#include "const.h"
-#include "protect.h"
-#include "proto.h"
-#include "string.h"
-#include "proc.h"
-#include "global.h"
+
+#include"const.h"
+#include"func_proto.h"
 
 
 /*======================================================================*
