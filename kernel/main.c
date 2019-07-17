@@ -16,11 +16,8 @@ Date:		 	2019-7-16
 #include"func_proto.h"
 
 
-
-
-/*======================================================================*
-                           init_descriptor
- *======================================================================*/
+/* 辅助函数 */
+/* init_descriptor */
 PRIVATE void init_descriptor(DESCRIPTOR * p_desc, u32 base, u32 limit, u16 attribute)
 {
 	p_desc->limit_low		= limit & 0x0FFFF;			// 段界限 1		(2 字节)
