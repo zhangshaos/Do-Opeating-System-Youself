@@ -10,10 +10,12 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "type.h"
 #include "const.h"
 #include "protect.h"
-#include "proto.h"
 #include "proc.h"
 #include "global.h"
 #include "string.h" /* 提供memXXX函数 */
+#include "tty.h"
+#include "console.h"
+#include "proto.h"
 
 
 /* 本文件内函数声明 */
@@ -177,7 +179,7 @@ PUBLIC void init_prot()
 	// 填充 GDT 中进程的 LDT 的描述符
 	PROCESS* p_proc	= proc_table;
 	u16 selector_ldt = INDEX_LDT_FIRST << 3;
-	for(int i=0;i<NR_TASKS;i++)
+	for(int i=0;i<NR_TASKS+NR_PROCS;i++)
 	{
 		init_descriptor(&gdt[selector_ldt>>3],
 				vir2phys(seg2phys(SELECTOR_KERNEL_DS),

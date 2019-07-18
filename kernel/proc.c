@@ -10,10 +10,12 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "type.h"
 #include "const.h"
 #include "protect.h"
-#include "proto.h"
+#include "tty.h"
+#include "console.h"
 #include "string.h"
 #include "proc.h"
 #include "global.h"
+#include "proto.h"
 
 /*======================================================================*
                               schedule
@@ -26,7 +28,7 @@ PUBLIC void schedule()
 	while (0 == greatest_ticks) 
 	{
 		/* 寻找剩余ticks(优先级)最多的进程 */
-		for (p = proc_table; p < proc_table+NR_TASKS; p++) 
+		for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
 		{
 			if (p->ticks > greatest_ticks) {
 				greatest_ticks = p->ticks;
@@ -37,7 +39,7 @@ PUBLIC void schedule()
 		/* 如果所有进程都结束了, 重新跑一遍 */
 		if (0 == greatest_ticks) 
 		{
-			for (p = proc_table; p < proc_table+NR_TASKS; p++) {
+			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) {
 				p->ticks = p->priority;
 			}
 		}

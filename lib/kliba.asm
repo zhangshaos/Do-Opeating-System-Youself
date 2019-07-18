@@ -19,8 +19,11 @@ global	disp_str
 global	disp_color_str
 global	out_byte
 global	in_byte
-global  enable_irq
-global  disable_irq
+global	enable_irq
+global	disable_irq
+global	enable_int
+global	disable_int
+
 
 
 ; ========================================================================
@@ -150,7 +153,7 @@ in_byte:
 	nop	; 一点延迟
 	nop
 
-	pop ebx
+	pop edx
 	pop ebp
 	ret
 
@@ -187,6 +190,7 @@ disable_0:
         mov     eax, 1                  ; disabled by this function
 
 		pop ecx
+		pop ebp
         ret
 disable_8:
         in      al, INT_S_CTLMASK
@@ -253,5 +257,20 @@ enable_8:
 		pop ecx
 		pop ebp
         ret
+
+; ========================================================================
+;		   void disable_int();
+; ========================================================================
+disable_int:
+	cli
+	ret
+
+; ========================================================================
+;		   void enable_int();
+; ========================================================================
+enable_int:
+	sti
+	ret
+
 
 

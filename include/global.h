@@ -13,6 +13,8 @@ Other:			参见<Orange's 一个操作系统的实现>
 #define	EXTERN
 #endif
 
+#include"tty.h"
+
 EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
 
 EXTERN	int		    disp_pos;
@@ -26,8 +28,13 @@ EXTERN	u32		k_reenter;	/* 0:not reenter interupting or exception, -1 or other:re
 EXTERN	TSS		tss;                /* task  status segement */
 EXTERN	PROCESS*	p_proc_ready;	/* point to the ready process table for invoking*/
 
+EXTERN	int		nr_current_console;
+
 extern	PROCESS		proc_table[];	/* array of PCB */
 extern	char		task_stack[];	/* stack that can be divided for all tasks */
-extern  TASK            task_table[];	/* array of description for all tasks */
-extern	irq_handler	irq_table[];	/* array of interupt handler */
 
+extern  TASK        task_table[];	/* array of description for all tasks */
+extern  TASK        user_proc_table[];
+extern	irq_handler	irq_table[];	/* array of interupt handler */
+extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and private CONSOLE(ouput) */
+extern  CONSOLE     console_table[];/* display characters on screen */

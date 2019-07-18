@@ -336,7 +336,12 @@ sys_call:
 
         sti
 
-        call    [sys_call_table + eax * 4]
+        push	dword [p_proc_ready]	;dword : 强制要 PROCESS 的前四个字节? gs?
+		push	ecx
+		push	ebx
+		call    [sys_call_table + eax * 4]
+		add	esp, 4 * 3
+
         mov     [esi + EAXREG - P_STACKBASE], eax
 
         cli

@@ -9,10 +9,12 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "type.h"
 #include "const.h"
 #include "protect.h"
-#include "proto.h"
+#include "tty.h"
+#include "console.h"
 #include "string.h"
 #include "proc.h"
 #include "global.h"
+#include "proto.h"
 
 
 /*======================================================================*
