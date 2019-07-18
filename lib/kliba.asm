@@ -148,7 +148,7 @@ in_byte:
 	nop	; 一点延迟
 	nop
 
-	pop ebx
+	pop edx
 	pop ebp
 	ret
 
