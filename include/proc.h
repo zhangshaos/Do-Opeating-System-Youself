@@ -25,7 +25,7 @@ typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	edx;		/* ┃						│			*/
 	u32	ecx;		/* ┃						│			*/
 	u32	eax;		/* ┛						│			*/
-	u32	retaddr;	/* return address for assembly code save()	│			*/
+	u32	retaddr;	/* return address for assembly code save()	│			*//* 产生跨特权级中断时, ss,esp,eflags,cs,eip自动压栈. 然后哦call save填充此. */
 	u32	eip;		/*  ┓						│			*/
 	u32	cs;			/*  ┃						│			*/
 	u32	eflags;		/*  ┣ these are pushed by CPU during interrupt	│			*/

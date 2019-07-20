@@ -356,7 +356,7 @@ sys_call:
 ;			2.系统调用从这里返回task(使用PCB)
 ;			3.这玩意是核心代码之一,中断都ret到这里,然后从这里返回到ring1-3
 ; ====================================================================================
-;第一次中断(没有发生中断重入)
+;第一次中断开始/结束(没有发生中断重入)到这里
 restart:
 	;离开内核栈
 	mov	esp, [p_proc_ready]				;从此开始esp指向的是PCB
@@ -364,7 +364,7 @@ restart:
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax	;为下次的特权级切换(ring1-3->ring0)准备
 
-;中断重入
+;中断重入到这里
 restart_reenter:
 	dec	dword [k_reenter]
 	;出栈的是PCB中的信息(第一次中断) or 内核栈(中断重入)

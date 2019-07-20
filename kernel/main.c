@@ -122,14 +122,6 @@ PUBLIC int kernel_main()
 
 
 
-/* 诶, 这里有一个问题?
-如果, 进程A,B,C在delay的时候, 被时钟中断中断
-经过一整周A->B->C的调度后,
-接下来是重入进程"A"还是继续"A"???
-艹, 这个貌似就是重入, 然后再次时钟中断的时候覆盖之前的PCB
- */
-
-
 /*======================================================================*
                                TestA
  *======================================================================*/
@@ -137,8 +129,8 @@ void TestA()
 {
 	int i = 0;
 	while (1) {
-		printf("<Ticks:%x>", get_ticks());
-		milli_delay(200);
+		printf("<Ticks:%x>", get_ticks());	/* 进程A的两次printf之间大概100(0x64)个ticks,每个ticks10ms,即1000ms(1s) */
+		milli_delay(1000);
 	}
 }
 
@@ -150,7 +142,7 @@ void TestB()
 	int i = 0x1000;
 	while(1){
 		printf("B");
-		milli_delay(200);
+		milli_delay(1000);
 	}
 }
 
@@ -162,6 +154,6 @@ void TestC()
 	int i = 0x2000;
 	while(1){
 		printf("C");
-		milli_delay(200);
+		milli_delay(1000);
 	}
 }
