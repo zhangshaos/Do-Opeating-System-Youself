@@ -43,6 +43,8 @@ PRIVATE void    kb_ack();
 
 /*======================================================================*
                             keyboard_handler
+	=================================================================
+							键盘中断处理程序
  *======================================================================*/
 PUBLIC void keyboard_handler(int irq)
 {
@@ -55,15 +57,14 @@ PUBLIC void keyboard_handler(int irq)
 			kb_in.p_head = kb_in.buf;
 		}
 		kb_in.count++;
-
-		/* display for  */
-		printf("%x",*kb_in.p_tail);
 	}
 }
 
 
 /*======================================================================*
                            init_keyboard
+	=================================================================
+							允许接受键盘中断
 *======================================================================*/
 PUBLIC void init_keyboard()
 {
@@ -99,31 +100,39 @@ PUBLIC void keyboard_read(TTY* p_tty)
 			 */
 	u32*	keyrow;	/* 指向 keymap[] 的某一行 */
 
-	if(kb_in.count > 0){
+	if(kb_in.count > 0)
+	{
 		code_with_E0 = 0;
 
-		scan_code = get_byte_from_kbuf();
+		scan_code = get_byte_from_kbuf();	/* 获取扫描码 */
 
-		/* 下面开始解析扫描码 */
-		if (scan_code == 0xE1) {
+		/* 下面开始解析扫描码,
+		先判断两个扫描码-make长度>2的特殊按键 */
+		if (scan_code == 0xE1) 
+		{
 			int i;
-			u8 pausebrk_scode[] = {0xE1, 0x1D, 0x45,
-					       0xE1, 0x9D, 0xC5};
+			u8 pausebrk_scode[] = {0xE1, 0x1D, 0x45, 0xE1, 0x9D, 0xC5};
+
 			int is_pausebreak = 1;
-			for(i=1;i<6;i++){
-				if (get_byte_from_kbuf() != pausebrk_scode[i]) {
+			/* 测试按键是不是PauseBreak */
+			for(i=1;i<6;i++)
+			{
+				if (get_byte_from_kbuf() != pausebrk_scode[i]) 
+				{
 					is_pausebreak = 0;
 					break;
 				}
 			}
-			if (is_pausebreak) {
+			if (is_pausebreak) 
+			{
 				key = PAUSEBREAK;
 			}
 		}
-		else if (scan_code == 0xE0) {
+		else if (scan_code == 0xE0) 
+		{
 			scan_code = get_byte_from_kbuf();
 
-			/* PrintScreen 被按下 */
+			/* 测试PrintScreen 被按下 */
 			if (scan_code == 0x2A) {
 				if (get_byte_from_kbuf() == 0xE0) {
 					if (get_byte_from_kbuf() == 0x37) {
@@ -132,7 +141,7 @@ PUBLIC void keyboard_read(TTY* p_tty)
 					}
 				}
 			}
-			/* PrintScreen 被释放 */
+			/* 测试PrintScreen 被释放 */
 			if (scan_code == 0xB7) {
 				if (get_byte_from_kbuf() == 0xE0) {
 					if (get_byte_from_kbuf() == 0xAA) {
@@ -146,7 +155,11 @@ PUBLIC void keyboard_read(TTY* p_tty)
 				code_with_E0 = 1;
 			}
 		}
-		if ((key != PAUSEBREAK) && (key != PRINTSCREEN)) {
+
+
+		/* 如果是一般按键 */
+		if ((key != PAUSEBREAK) && (key != PRINTSCREEN)) 
+		{
 			/* 首先判断Make Code 还是 Break Code */
 			make = (scan_code & FLAG_BREAK ? 0 : 1);
 
@@ -156,7 +169,9 @@ PUBLIC void keyboard_read(TTY* p_tty)
 			column = 0;
 
 			int caps = shift_l || shift_r;
-			if (caps_lock) {
+			if (caps_lock)
+			{
+				/* 如果不是按键"字符", 那么大写锁定没什么用 */
 				if ((keyrow[0] >= 'a') && (keyrow[0] <= 'z')){
 					caps = !caps;
 				}
@@ -212,11 +227,15 @@ PUBLIC void keyboard_read(TTY* p_tty)
 				break;
 			}
 
-			if (make) { /* 忽略 Break Code */
+
+			/* 忽略 Break Code, 只处理 Make Code */
+			if (make) 
+			{
 				int pad = 0;
 
 				/* 首先处理小键盘 */
-				if ((key >= PAD_SLASH) && (key <= PAD_9)) {
+				if ((key >= PAD_SLASH) && (key <= PAD_9))
+				{
 					pad = 1;
 					switch(key) {
 					case PAD_SLASH:
@@ -237,15 +256,19 @@ PUBLIC void keyboard_read(TTY* p_tty)
 					default:
 						if (num_lock &&
 						    (key >= PAD_0) &&
-						    (key <= PAD_9)) {
+						    (key <= PAD_9)) 
+						{
 							key = key - PAD_0 + '0';
 						}
 						else if (num_lock &&
-							 (key == PAD_DOT)) {
+							 (key == PAD_DOT)) 
+						{
 							key = '.';
 						}
-						else{
-							switch(key) {
+						else
+						{
+							switch(key) 
+							{
 							case PAD_HOME:
 								key = HOME;
 								break;
@@ -310,7 +333,8 @@ PRIVATE u8 get_byte_from_kbuf()       /* 从键盘缓冲区中读取下一个字
         disable_int();	/* forbid interrupt */
         scan_code = *(kb_in.p_tail);
         kb_in.p_tail++;
-        if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) {
+        if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) 
+		{
                 kb_in.p_tail = kb_in.buf;
         }
         kb_in.count--;
@@ -335,7 +359,7 @@ PRIVATE void kb_wait()	/* 等待 8042 的输入缓冲区空 */
 /*======================================================================*
 				 kb_ack
  *======================================================================*/
-PRIVATE void kb_ack()
+PRIVATE void kb_ack()	/* 等待键盘回复 */
 {
 	u8 kb_read;
 
@@ -352,11 +376,11 @@ PRIVATE void set_leds()
 	u8 leds = (caps_lock << 2) | (num_lock << 1) | scroll_lock;
 
 	kb_wait();
-	out_byte(KB_DATA, LED_CODE);
+	out_byte(KB_DATA, LED_CODE);	/* 准备设置键盘灯 */
 	kb_ack();
 
 	kb_wait();
-	out_byte(KB_DATA, leds);
+	out_byte(KB_DATA, leds);	/* 设置键盘灯 */
 	kb_ack();
 }
 

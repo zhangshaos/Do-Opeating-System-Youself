@@ -35,7 +35,7 @@ PUBLIC void init_screen(TTY* p_tty)
 	int nr_tty = p_tty - tty_table;
 	p_tty->p_console = console_table + nr_tty;
 
-	int v_mem_size = V_MEM_SIZE >> 1;	/* 显存总大小 (in WORD) */
+	int v_mem_size = V_MEM_SIZE / 2;	/* 显存总大小 (in WORD) */
 
 	int con_v_mem_size                   = v_mem_size / NR_CONSOLES;
 	p_tty->p_console->original_addr      = nr_tty * con_v_mem_size;
@@ -64,12 +64,14 @@ PUBLIC void init_screen(TTY* p_tty)
 *======================================================================*/
 PUBLIC int is_current_console(CONSOLE* p_con)
 {
-	return (p_con == &console_table[nr_current_console]);
+	return (p_con == console_table + nr_current_console);
 }
 
 
 /*======================================================================*
-			   out_char
+			   					out_char
+	==================================================================
+					将字符的ascii码和颜色属性写到显存中 
  *======================================================================*/
 PUBLIC void out_char(CONSOLE* p_con, char ch)
 {
@@ -78,14 +80,16 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 	switch(ch) {
 	case '\n':
 		if (p_con->cursor < p_con->original_addr +
-		    p_con->v_mem_limit - SCREEN_WIDTH) {
+		    p_con->v_mem_limit - SCREEN_WIDTH)
+		{
 			p_con->cursor = p_con->original_addr + SCREEN_WIDTH * 
 				((p_con->cursor - p_con->original_addr) /
 				 SCREEN_WIDTH + 1);
 		}
 		break;
 	case '\b':
-		if (p_con->cursor > p_con->original_addr) {
+		if (p_con->cursor > p_con->original_addr)
+		{
 			p_con->cursor--;
 			*(p_vmem-2) = ' ';
 			*(p_vmem-1) = DEFAULT_CHAR_COLOR;
@@ -93,7 +97,8 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 		break;
 	default:
 		if (p_con->cursor <
-		    p_con->original_addr + p_con->v_mem_limit - 1) {
+		    p_con->original_addr + p_con->v_mem_limit - 1)
+		{
 			*p_vmem++ = ch;
 			*p_vmem++ = DEFAULT_CHAR_COLOR;
 			p_con->cursor++;
@@ -101,7 +106,9 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 		break;
 	}
 
-	while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE) {
+	/* 如果字符超过屏幕了, 则卷轴 */
+	while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE)
+	{
 		scroll_screen(p_con, SCR_DN);
 	}
 
@@ -113,7 +120,8 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 *======================================================================*/
 PRIVATE void flush(CONSOLE* p_con)
 {
-	if (is_current_console(p_con)) {
+	if (is_current_console(p_con)) 
+	{
 		set_cursor(p_con->cursor);
 		set_video_start_addr(p_con->current_start_addr);
 	}
@@ -174,13 +182,15 @@ PUBLIC void select_console(int nr_console)	/* 0 ~ (NR_CONSOLES - 1) */
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction)
 {
 	if (direction == SCR_UP) {
-		if (p_con->current_start_addr > p_con->original_addr) {
+		if (p_con->current_start_addr > p_con->original_addr)
+		{
 			p_con->current_start_addr -= SCREEN_WIDTH;
 		}
 	}
 	else if (direction == SCR_DN) {
 		if (p_con->current_start_addr + SCREEN_SIZE <
-		    p_con->original_addr + p_con->v_mem_limit) {
+		    p_con->original_addr + p_con->v_mem_limit)
+		{
 			p_con->current_start_addr += SCREEN_WIDTH;
 		}
 	}

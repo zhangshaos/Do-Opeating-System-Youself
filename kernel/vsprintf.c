@@ -24,8 +24,10 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 	char	tmp[256];
 	va_list	p_next_arg = args;
 
-	for (p=buf;*fmt;fmt++) {
-		if (*fmt != '%') {
+	for (p=buf;*fmt;fmt++) 
+	{
+		if (*fmt != '%')
+		{
 			*p++ = *fmt;
 			continue;
 		}

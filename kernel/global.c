@@ -32,7 +32,7 @@ PUBLIC  TASK    user_proc_table[NR_PROCS] = {
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC	TTY		tty_table[NR_CONSOLES];
+PUBLIC	TTY			tty_table[NR_CONSOLES];
 PUBLIC	CONSOLE		console_table[NR_CONSOLES];
 
 PUBLIC	irq_handler		irq_table[NR_IRQ];
