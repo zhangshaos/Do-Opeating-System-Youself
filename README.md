@@ -33,7 +33,8 @@ make image #make *.bin and write to a.img. after that, you can use bochs to debu
 
 make clean #clean
 ```
-
+### July 22th, 2019
+* Add standard I/O and support 3 console.
 
 
 
