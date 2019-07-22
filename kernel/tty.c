@@ -1,6 +1,6 @@
 /*================================================================================================
 File name:		kernel/tty.c
-Description:	*
+Description:	*tty任务(包括读和写)
 Copyright:		Chauncey Zhang
 Date:		 	2019-7-18
 Other:			参见<Orange's 一个操作系统的实现>

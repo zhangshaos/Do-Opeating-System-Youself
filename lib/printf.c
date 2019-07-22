@@ -1,8 +1,8 @@
 /*================================================================================================
-File name:	lib/printf.c
+File name:		lib/printf.c
 Description:	*标准c的printf函数
-Copyright:	Chauncey Zhang
-Date:		2019-7-21
+Copyright:		Chauncey Zhang
+Date:			2019-7-21
 ===============================================================================================*/
 
 #include"type.h"

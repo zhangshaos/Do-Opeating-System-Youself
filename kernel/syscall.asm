@@ -38,6 +38,7 @@ get_ticks:
 	mov	eax, ID_GET_TICKS 	;给int 90h中断处理程序:系统调用传递参数.
 	int	INT_VECTOR_SYS_CALL	;中断调用sys_call() 
 	ret
+;sys_get_ticks()定义在clock.c中
 
 
 ; ====================================================================================
@@ -49,7 +50,7 @@ write:
         mov     ecx, [esp + 8]  ;syscall()中将这两个参数传给了sys_write()
         int     INT_VECTOR_SYS_CALL
         ret
-
+;sys_write()定义在在tty.c中
 
 
 
