@@ -21,16 +21,21 @@ BOOT 	= 	boot/boot.bin boot/loader.bin
 KERNEL 	= 	kernel.bin
 OBJS	= 	kernel/kernel.o\
 			kernel/clock.o\
+			kernel/console.o\
 			kernel/exception_handler.o\
 			kernel/global.o\
 			kernel/init_idt.o\
 			kernel/interrupt.o\
+			kernel/keyboard.o\
+			kernel/keymap.o\
 			kernel/main.o\
 			kernel/proc.o\
 			kernel/syscall.o\
+			kernel/tty.o\
 			lib/klib.o\
 			lib/kliba.o\
-			lib/memory.o
+			lib/memory.o\
+			lib/printf.o
 #必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(30400))
 
 # 动作
@@ -38,10 +43,10 @@ OBJS	= 	kernel/kernel.o\
 nop :
 		@echo "make image : 编译链接所有文件,并写入a.img中\nmake clean : 删除所有生成的文件"
 
-image :	clean mk_boot mk_obj mk_kernel mk_image
+image :	clean mk_boot mk_obj mk_kernel mk_image clean
 
 clean :
-		rm -f  $(OBJS) $(BOOT) $(KERNEL)
+		rm -f  $(OBJS) $(BOOT)
 
 mk_boot	:	$(BOOT)
 
@@ -71,6 +76,9 @@ $(KERNEL):		$(OBJS)
 kernel/clock.o:	kernel/clock.c include/const.h include/global.h include/func_proto.h include/const_interrupt.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
+kernel/console.o:	kernel/console.c include/const.h include/type.h include/struct_console.h include/struct_tty.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
 kernel/exception_handler.o:	kernel/exception_handler.c include/const.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
@@ -86,6 +94,12 @@ kernel/interrupt.o:	kernel/interrupt.asm include/const.inc
 kernel/kernel.o:	kernel/kernel.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
+kernel/keyboard.o:	kernel/keyboard.c include/const.h include/struct_keyboard.h include/type.h include/struct_tty.h include/const_interrupt.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
+kernel/keymap.o:	kernel/keymap.c include/const.h include/type.h include/struct_keyboard.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
 kernel/main.o:	kernel/main.c include/type.h include/const.h include/global.h include/struct_descript.h include/const_interrupt.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
@@ -94,6 +108,9 @@ kernel/proc.o:	kernel/proc.c include/const.h include/struct_proc.h include/globa
 
 kernel/syscall.o:	kernel/syscall.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
+
+kernel/tty.o:	kernel/tty.c include/const.h include/type.h include/struct_tty.h include/struct_keyboard.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
 
 lib/klib.o:	lib/klib.c include/const.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
@@ -104,4 +121,6 @@ lib/kliba.o:lib/kliba.asm include/const.inc
 lib/memory.o:	lib/memory.asm
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
+lib/printf.o:	lib/printf.c include/type.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
 

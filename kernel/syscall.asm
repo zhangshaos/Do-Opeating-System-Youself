@@ -10,10 +10,12 @@
 
 INT_VECTOR_SYS_CALL equ     0x90    ;参考interruptor.c中的定义
 ID_GET_TICKS        equ     0x0     ;sys_call_table[]中索引
+ID_WRITE    	    equ     0x1
 
 ; 导入符号
 extern  save
 extern  sys_call_table
+extern  p_proc_ready
 
 
 [section .text]
@@ -21,6 +23,7 @@ extern  sys_call_table
 ; 导出符号
 global  get_ticks
 global  sys_call
+global  write
 
 
 ; ===============================系统调用定义=====================================================
@@ -37,7 +40,15 @@ get_ticks:
 	ret
 
 
-
+; ====================================================================================
+;                          void write(char* buf, int len);
+; ====================================================================================
+write:
+        mov     eax, ID_WRITE
+        mov     ebx, [esp + 4]
+        mov     ecx, [esp + 8]
+        int     INT_VECTOR_SYS_CALL
+        ret
 
 
 
@@ -60,7 +71,12 @@ sys_call:
 
         sti
 
-        call    [sys_call_table + eax * 4]
+        push	dword [p_proc_ready]	;dword : 强制要 PROCESS 的前四个字节? gs?
+		push	ecx
+		push	ebx
+		call    [sys_call_table + eax * 4]
+		add	esp, 4 * 3
+
         mov     [esi + EAXREG - P_STACKBASE], eax   ;procsss->EAX = eax
 
         cli

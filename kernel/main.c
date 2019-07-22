@@ -97,7 +97,7 @@ PUBLIC void cstart()
 
 	/* 初始化 GDT 中的LDT描述符 */
 	u16 selector_ldt = INDEX_LDT_FIRST << 3;
-	for(int i=0;i<NR_TASKS;i++)
+	for(int i=0;i<NR_TASKS+NR_PROCS;i++)
 	{
 		init_descriptor(&gdt[selector_ldt>>3],
 				vir2phys(seg2phys(SELECTOR_KERNEL_DS),
@@ -137,37 +137,57 @@ PUBLIC int kernel_main()
 	u16			selector_ldt	= SELECTOR_LDT_FIRST;
 	
 
+		u8              privilege;
+        u8              rpl;
+        int             eflags;
 	/* 进程表初始化 */
-	for (int i = 0; i < NR_TASKS; i++) 
+	for (int i = 0; i < NR_TASKS + NR_PROCS; i++) 
 	{
+				if (i < NR_TASKS) {     /* 任务 */
+                        p_task    = task_table + i;
+                        privilege = PRIVILEGE_TASK;
+                        rpl       = RPL_TASK;
+                        eflags    = 0x1202; /* IF=1, IOPL=1, bit 2 is always 1 */
+                }
+                else {                  /* 用户进程 */
+                        p_task    = user_proc_table + (i - NR_TASKS);
+                        privilege = PRIVILEGE_USER;
+                        rpl       = RPL_USER;
+                        eflags    = 0x202; /* IF=1, bit 2 is always 1 */
+                }
+
 		strcpy(p_proc->p_name, p_task->name);	// name of the process
 		p_proc->pid = i;						// pid
 
 		p_proc->ldt_sel = selector_ldt;
 
 		/* 填充各个进程表中的LDT selector */
+		/* 填充进程的代码段选择子 */
 		memcpy(&p_proc->ldts[0],
 				&gdt[SELECTOR_KERNEL_CS >> 3],
 		       sizeof(DESCRIPTOR));
-		p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5;
+		p_proc->ldts[0].attr1 = DA_C | privilege << 5;
 
+		/* 填充进程的数据段选择子 */
 		memcpy(&p_proc->ldts[1],
 				&gdt[SELECTOR_KERNEL_DS >> 3],
 		       sizeof(DESCRIPTOR));
-		p_proc->ldts[1].attr1 = DA_DRW | PRIVILEGE_TASK << 5;
+		p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 
 		/* 填充进程表中的segment selector */
-		p_proc->regs.cs	= ((8 * 0) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | RPL_TASK;
-		p_proc->regs.ds	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | RPL_TASK;
-		p_proc->regs.es	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | RPL_TASK;
-		p_proc->regs.fs	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | RPL_TASK;
-		p_proc->regs.ss	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | RPL_TASK;
-		p_proc->regs.gs	= (SELECTOR_KERNEL_GS & SA_RPL_MASK)	| RPL_TASK;
+		p_proc->regs.cs	= ((8 * 0) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
+		p_proc->regs.ds	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
+		p_proc->regs.es	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
+		p_proc->regs.fs	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
+		p_proc->regs.ss	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
+		p_proc->regs.gs	= (SELECTOR_KERNEL_GS & SA_RPL_MASK)	| rpl;
 
 		/* 填充进程表中进程的 EIP 和 ESP (ring1-3) */
 		p_proc->regs.eip = (u32)p_task->initial_eip;
 		p_proc->regs.esp = (u32)p_task_stack;
-		p_proc->regs.eflags = 0x1202; /* IF=1, IOPL=1 */
+		p_proc->regs.eflags = eflags;
+
+		p_proc->nr_tty = 0;		/* 所有进程默认使用tty0 */
 
 		p_task_stack -= p_task->stacksize;
 		p_proc++;
@@ -175,9 +195,14 @@ PUBLIC int kernel_main()
 		selector_ldt += 1 << 3;
 	}
 
-	proc_table[0].ticks = proc_table[0].priority = 1500;	/* 15秒 */
+	proc_table[0].ticks = proc_table[0].priority = 	500;	/* 0.5秒 */
 	proc_table[1].ticks = proc_table[1].priority =  500;
-	proc_table[2].ticks = proc_table[2].priority =  300;
+	proc_table[2].ticks = proc_table[2].priority =  500;
+	proc_table[3].ticks = proc_table[3].priority =  500;
+
+        proc_table[1].nr_tty = 1;
+        proc_table[2].nr_tty = 1;
+        proc_table[3].nr_tty = 1;
 
 
 	/* 准备进程调度 */
@@ -186,14 +211,11 @@ PUBLIC int kernel_main()
 	p_proc_ready	= proc_table;	/* ready process */
 
 
-        /* 初始化 8253 PIT */
-        out_byte(TIMER_MODE, RATE_GENERATOR);
-        out_byte(TIMER0, (u8) (TIMER_FREQ/HZ) );
-        out_byte(TIMER0, (u8) ((TIMER_FREQ/HZ) >> 8));
+        /* 准备时钟中断 */
+		init_clock();
 
-		/* 打开时钟中断,让时钟中断选择 ready process */
-        put_irq_handler(CLOCK_IRQ, clock_handler); /* 设定时钟中断处理程序 */
-        enable_irq(CLOCK_IRQ);                     /* 让8259A可以接收时钟中断 */
+		/* 准备键盘中断 */
+    	init_keyboard();
 
 
 	/* ring0->ring1,开始执行任务/进程 */

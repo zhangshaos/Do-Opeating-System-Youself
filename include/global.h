@@ -11,6 +11,7 @@ Date:		 	2019-7-15
 #include"struct_descript.h"
 #include"struct_proc.h"
 #include"type.h"
+#include"struct_tty.h"
 
 /* system clock offered by 8254 chips.(every tick means about 10ms)*/
 extern	int		ticks;
@@ -35,11 +36,15 @@ extern	TSS		tss;
 /* point to the ready process table for invoking*/
 extern	PROCESS*	p_proc_ready;
 
+/* current console's index */
+extern	int		nr_current_console;
+
 /* array of all PCBs */
 extern	PROCESS		proc_table[];
 
-/* descriptions for all Tasks */
+/* descriptions for all Tasks and User-Process */
 extern	TASK		task_table[];
+extern  TASK        user_proc_table[];
 
 /* isolated stack for all Tasks, divided by every Task*/
 extern	char		task_stack[];
@@ -50,5 +55,11 @@ extern	irq_handler	irq_table[];
 /* customed system call (int 90h) handler */
 extern	system_call	sys_call_table[];
 
+/* standard I/O */
+extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and private CONSOLE(ouput) */
+extern  CONSOLE     console_table[];/* display characters on screen */
+
+/* scan code -> kaymap[] -> key */
+extern  u32 keymap[];           /* this array locates in "keymap.c" for its great scale... */
 
 #endif

@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.cpp": "cpp",
+        "global.h": "c",
+        "const.h": "c",
+        "struct_descript.h": "c",
+        "func_proto.h": "c",
+        "struct_proc.h": "c",
+        "const_interrupt.h": "c",
+        "type.h": "c",
+        "struct_tty.h": "c"
+    }
+}

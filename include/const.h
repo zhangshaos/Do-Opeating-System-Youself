@@ -20,6 +20,8 @@ Date:		 	2019-6-29
 #define	TRUE	1
 #define	FALSE	0
 
+
+
 /* GDT 和 IDT 中描述符的个数 */
 #define	GDT_SIZE	128
 #define	IDT_SIZE	256
@@ -37,6 +39,9 @@ Date:		 	2019-6-29
 #define	RPL_KRNL    0
 #define	RPL_TASK	1
 #define	RPL_USER	3
+
+/* TTY */
+#define NR_CONSOLES	3	/* consoles */
 
 
 #endif /* _ORANGES_CONST_H_ */

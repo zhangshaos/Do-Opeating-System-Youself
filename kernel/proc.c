@@ -23,7 +23,7 @@ PUBLIC void schedule()
 	while (0 == greatest_ticks) 
 	{
 		/* 寻找剩余ticks(优先级)最多的进程 */
-		for (p = proc_table; p < proc_table+NR_TASKS; p++) 
+		for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
 		{
 			if (p->ticks > greatest_ticks) {
 				greatest_ticks = p->ticks;
@@ -34,7 +34,7 @@ PUBLIC void schedule()
 		/* 如果所有进程都结束了, 重新跑一遍 */
 		if (0 == greatest_ticks) 
 		{
-			for (p = proc_table; p < proc_table+NR_TASKS; p++) {
+			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) {
 				p->ticks = p->priority;
 			}
 		}
@@ -53,7 +53,7 @@ void TestA()
 {
 	int i = 0;
 	while (1) {
-		disp_str("A.");
+		printf("<Ticks:%x>", get_ticks());	/* 进程A的两次printf之间大概100(0x64)个ticks,每个ticks10ms,即1000ms(1s) */
 		milli_delay(1000);
 	}
 }
@@ -65,7 +65,7 @@ void TestB()
 {
 	int i = 0x1000;
 	while(1){
-		disp_str("B.");
+		printf("B.");
 		milli_delay(1000);
 	}
 }
@@ -77,7 +77,7 @@ void TestC()
 {
 	int i = 0x2000;
 	while(1){
-		disp_str("C.");
+		printf("C.");
 		milli_delay(1000);
 	}
 }
