@@ -45,8 +45,8 @@ get_ticks:
 ; ====================================================================================
 write:
         mov     eax, ID_WRITE
-        mov     ebx, [esp + 4]
-        mov     ecx, [esp + 8]
+        mov     ebx, [esp + 4]  ;将buf->ebx, len->ecx
+        mov     ecx, [esp + 8]  ;syscall()中将这两个参数传给了sys_write()
         int     INT_VECTOR_SYS_CALL
         ret
 
@@ -71,11 +71,16 @@ sys_call:
 
         sti
 
-        push	dword [p_proc_ready]	;dword : 强制要 PROCESS 的前四个字节? gs?
+        push	dword [p_proc_ready]	;emmm, 我实在不想解释这里为什么push [XXX], 而不是push XXX;
+                                        ;这是因为我之前提到过, 但是我想你大概忘了......
+                                        ;在fxxk nasm中, 一切没有'[]'的标签&变量都是地址!
+                                        ;所以直接push XXX,实际上是push address of XXX.
 		push	ecx
 		push	ebx
+        ;实际上,对于大部分系统调用来说,上面三个参数根本就没有必要,之所以这么做,是为了代码简单;
+        ;顺便提一下,这同是也反映了C Call Convention的好处(奥卡姆剃刀~)
 		call    [sys_call_table + eax * 4]
-		add	esp, 4 * 3
+		add	    esp, 4 * 3
 
         mov     [esi + EAXREG - P_STACKBASE], eax   ;procsss->EAX = eax
 

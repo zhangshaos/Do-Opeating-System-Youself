@@ -19,6 +19,7 @@ LD_FLAGS		=	-s -m elf_i386 -Ttext $(ENTRYPOINT)
 # 编译后文件
 BOOT 	= 	boot/boot.bin boot/loader.bin
 KERNEL 	= 	kernel.bin
+#必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(30400))
 OBJS	= 	kernel/kernel.o\
 			kernel/clock.o\
 			kernel/console.o\
@@ -36,16 +37,15 @@ OBJS	= 	kernel/kernel.o\
 			lib/kliba.o\
 			lib/memory.o\
 			lib/printf.o
-#必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(30400))
 
 # 动作
 .PHONY : nop image clean mk_boot mk_obj mk_kernel mk_image
 nop :
 		@echo "make image : 编译链接所有文件,并写入a.img中\nmake clean : 删除所有生成的文件"
 
-image :	clean mk_boot mk_obj mk_kernel mk_image clean
+image :	clean mk_boot mk_obj mk_kernel mk_image 
 
-clean :
+clean :	
 		rm -f  $(OBJS) $(BOOT)
 
 mk_boot	:	$(BOOT)

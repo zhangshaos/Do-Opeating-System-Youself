@@ -99,7 +99,11 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 	}
 
 	/* 如果字符超过屏幕了, 则卷轴 */
-	while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE)
+	if(p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE)
+	{
+		scroll_screen(p_con, SCR_DN);
+	}
+	else if(p_con->cursor < p_con->current_start_addr)
 	{
 		scroll_screen(p_con, SCR_UP);
 	}
