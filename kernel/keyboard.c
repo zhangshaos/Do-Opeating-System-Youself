@@ -92,7 +92,6 @@ PUBLIC void init_keyboard()
 PUBLIC void keyboard_read(TTY* p_tty)
 {
 	u8	scan_code;
-	char	output[2];
 	int	make;	/* 1: make;  0: break. */
 
 	u32	key = 0;/* 用一个整型来表示一个键。比如，如果 Home 被按下，
@@ -365,7 +364,7 @@ PRIVATE void kb_ack()	/* 等待键盘回复 */
 
 	do {
 		kb_read = in_byte(KB_DATA);
-	} while (kb_read =! KB_ACK);
+	} while (kb_read != KB_ACK);
 }
 
 /*======================================================================*

@@ -303,11 +303,20 @@ save:
         push    es      ;  | 保存原寄存器值,保存在PCB中
         push    fs      ;  |
         push    gs      ; /
-        mov     dx, ss
-        mov     ds, dx
-        mov     es, dx
 
-        mov     esi, esp                    ;esi = 进程表(PCB)起始地址
+	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
+	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
+
+	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
+				;（没用栈，而是用了另一个寄存器 esi）
+	mov	dx, ss
+	mov	ds, dx
+	mov	es, dx
+	mov	fs, dx
+
+	mov	edx, esi	; 恢复 edx
+
+        mov     esi, esp                    ;esi = 进程表起始地址
 
         inc     dword [k_reenter]           ;k_reenter++;
         cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
@@ -335,13 +344,16 @@ sys_call:
         call    save	;切换到内核栈了
 
         sti
+	push	esi
 
-        push	dword [p_proc_ready]	;dword : 强制要 PROCESS 的前四个字节? gs?
-		push	ecx
-		push	ebx
-		call    [sys_call_table + eax * 4]
-		add	esp, 4 * 3
+	push	dword [p_proc_ready]
+	push	edx
+	push	ecx
+	push	ebx
+        call    [sys_call_table + eax * 4]
+	add	esp, 4 * 4
 
+	pop	esi
         mov     [esi + EAXREG - P_STACKBASE], eax
 
         cli

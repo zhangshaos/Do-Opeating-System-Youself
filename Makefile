@@ -12,14 +12,15 @@ ENTRYOFFSET	=   0x400
 
 # Programs, flags, etc.
 ASM		= nasm
-DASM	= ndisasm
+DASM	= objdump
 CC		= gcc
 LD		= ld
 ASMBFLAGS	= -I boot/include/
 ASMKFLAGS	= -I include/ -f elf
-CFLAGS		= -I include/ -m32 -fno-stack-protector -c -fno-builtin	#
-LDFLAGS		= -s -m elf_i386 -Ttext $(ENTRYPOINT)
-DASMFLAGS	= -u -o $(ENTRYPOINT) -e $(ENTRYOFFSET)
+CFLAGS		= -I include/ -m32 -fno-stack-protector -c -fno-builtin -Wall
+#CFLAGS		= -I include/ -c  -fno-builtin -fno-stack-protector -fpack-struct -Wall
+LDFLAGS		= -m elf_i386 -Ttext $(ENTRYPOINT) -Map krnl.map
+DASMFLAGS	= -D
 
 # This Program
 ORANGESBOOT	= boot/boot.bin boot/loader.bin
@@ -27,8 +28,9 @@ ORANGESKERNEL	= kernel.bin
 OBJS		= kernel/kernel.o kernel/syscall.o kernel/start.o kernel/main.o\
 			kernel/clock.o kernel/keyboard.o kernel/tty.o kernel/console.o\
 			kernel/i8259.o kernel/global.o kernel/protect.o kernel/proc.o\
+			kernel/systask.o\
 			kernel/printf.o kernel/vsprintf.o\
-			lib/kliba.o lib/klib.o lib/string.o
+			lib/kliba.o lib/klib.o lib/string.o lib/misc.o
 DASMOUTPUT	= kernel.bin.asm
 
 # All Phony Targets
@@ -64,11 +66,9 @@ buildimg :
 boot/boot.bin : boot/boot.asm boot/include/load.inc boot/include/fat12hdr.inc
 	$(ASM) $(ASMBFLAGS) -o $@ $<
 
-boot/loader.bin : boot/loader.asm boot/include/load.inc \
-			boot/include/fat12hdr.inc boot/include/pm.inc
+boot/loader.bin : boot/loader.asm boot/include/load.inc boot/include/fat12hdr.inc boot/include/pm.inc
 	$(ASM) $(ASMBFLAGS) -o $@ $<
 
-# kernel.bin
 $(ORANGESKERNEL) : $(OBJS)
 	$(LD) $(LDFLAGS) -o $(ORANGESKERNEL) $(OBJS)
 
@@ -118,8 +118,14 @@ kernel/printf.o: kernel/printf.c
 kernel/vsprintf.o: kernel/vsprintf.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+kernel/systask.o: kernel/systask.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 lib/klib.o: lib/klib.c include/type.h include/const.h include/protect.h include/string.h include/proc.h include/proto.h \
 			include/global.h
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/misc.o: lib/misc.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/kliba.o : lib/kliba.asm

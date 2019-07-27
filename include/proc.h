@@ -11,6 +11,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 #include "proc.h"
 #include "protect.h"
+#include "type.h"
 
 typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	gs;			/* ┓						│			*/
@@ -44,7 +45,20 @@ typedef struct s_proc {
         int priority;
 
 	u32 pid;                   /* process id passed in from MM */
-	char p_name[16];           /* name of the process */
+	char name[16];				/* name of the process */
+
+	int  p_flags;              /* process flags. A proc is runnable iff p_flags==0*/
+
+	MESSAGE * p_msg;
+
+	int p_recvfrom;				/* 'p' means index of proc_table[] */
+	int p_sendto;
+
+	int has_int_msg;           /* 如果非0, 表示该进程有一个待处理的硬件中断 */
+
+	struct s_proc * q_sending;  		/* pointer to the first process that deliver msg to this process */
+
+	struct s_proc * next_sending;		/* the next process that deliver msg to the destination of this process  */
 
 	int nr_tty;					/* just for simplifying, every Process have its TTY. */
 }PROCESS;
@@ -56,18 +70,23 @@ typedef struct s_task {
 	char	name[32];
 }TASK;
 
+#define proc2pid(x) (x - proc_table)
 
 /* Number of tasks & procs */
-#define NR_TASKS	1
-#define NR_PROCS	3	/* user process */
+#define NR_TASKS	2
+#define NR_PROCS	3
+#define FIRST_PROC	proc_table[0]
+#define LAST_PROC	proc_table[NR_TASKS + NR_PROCS - 1]
 
 /* stacks of tasks */
 #define STACK_SIZE_TTY		0x8000
+#define STACK_SIZE_SYS		0x8000
 #define STACK_SIZE_TESTA	0x8000
 #define STACK_SIZE_TESTB	0x8000
 #define STACK_SIZE_TESTC	0x8000
 
 #define STACK_SIZE_TOTAL	(STACK_SIZE_TTY + \
+				STACK_SIZE_SYS + \
 				STACK_SIZE_TESTA + \
 				STACK_SIZE_TESTB + \
 				STACK_SIZE_TESTC)

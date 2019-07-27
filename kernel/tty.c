@@ -70,10 +70,6 @@ PRIVATE void init_tty(TTY* p_tty)
  *======================================================================*/
 PUBLIC void in_process(TTY* p_tty, u32 key)
 {
-		//static int nr_ready_console = 0; /* static 声明的时候赋值无效??? */
-		//nr_ready_console = 0;
-
-        char output[2] = {'\0', '\0'};
 
         if (!(key & FLAG_EXT))	/* 如果是可打印字符, 则将其打印出来 */
 		{
@@ -195,12 +191,73 @@ PUBLIC void tty_write(TTY* p_tty, char* buf, int len)
         }
 }
 
+
 /*======================================================================*
-                              sys_write
+                              sys_printx
 *======================================================================*/
-PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc)
+PUBLIC int sys_printx(int _unused1, int _unused2, char* s, PROCESS* p_proc)
 {
-        tty_write(&tty_table[p_proc->nr_tty], buf, len);
-        return 0;
+	const char * p;
+	char ch;
+
+	char reenter_err[] = "? k_reenter is incorrect for unknown reason";
+	reenter_err[0] = MAG_CH_PANIC;
+
+	/**
+	 * @note Code in both Ring 0 and Ring 1~3 may invoke printx().
+	 * If this happens in Ring 0, no linear-physical address mapping
+	 * is needed.
+	 *
+	 * @attention The value of `k_reenter' is tricky here. When
+	 *   -# printx() is called in Ring 0
+	 *      - k_reenter > 0. When code in Ring 0 calls printx(),
+	 *        an `interrupt re-enter' will occur (printx() generates
+	 *        a software interrupt). Thus `k_reenter' will be increased
+	 *        by `kernel.asm::save' and be greater than 0.
+	 *   -# printx() is called in Ring 1~3
+	 *      - k_reenter == 0.
+	 */
+	if (k_reenter == 0)  /* printx() called in Ring<1~3> */
+		p = va2la(proc2pid(p_proc), s);
+	else if (k_reenter > 0) /* printx() called in Ring<0> */
+		p = s;
+	else	/* this should NOT happen */
+		p = reenter_err;
+
+	/**
+	 * @note if assertion fails in any TASK, the system will be halted;
+	 * if it fails in a USER PROC, it'll return like any normal syscall
+	 * does.
+	 */
+	if ((*p == MAG_CH_PANIC) ||
+	    (*p == MAG_CH_ASSERT && p_proc_ready < &proc_table[NR_TASKS])) {
+		disable_int();
+		char * v = (char*)V_MEM_BASE;
+		const char * q = p + 1; /* +1: skip the magic char */
+
+		while (v < (char*)(V_MEM_BASE + V_MEM_SIZE)) {
+			*v++ = *q++;
+			*v++ = RED_CHAR;
+			if (!*q) {
+				while (((int)v - V_MEM_BASE) % (SCREEN_WIDTH * 16)) {
+					/* *v++ = ' '; */
+					v++;
+					*v++ = GRAY_CHAR;
+				}
+				q = p + 1;
+			}
+		}
+
+		__asm__ __volatile__("hlt");
+	}
+
+	while ((ch = *p++) != 0) {
+		if (ch == MAG_CH_PANIC || ch == MAG_CH_ASSERT)
+			continue; /* skip the magic char */
+
+		out_char(tty_table[p_proc->nr_tty].p_console, ch);
+	}
+
+	return 0;
 }
 
