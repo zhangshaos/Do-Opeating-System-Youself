@@ -23,27 +23,3 @@ PUBLIC int get_ticks()
     send_recv(BOTH, TASK_SYS, &msg);
     return msg.RETVAL;
 }
-
-
-
-
-
-/* 辅助函数 */
-/**
- * 发出严重警告,终止程序
- * 
- */
-PUBLIC void panic(const char *fmt, ...)
-{
-	char buf[256];
-
- 	/* 4 is the size of fmt in the stack */
-	va_list arg = (va_list)((char*)&fmt + 4);
-
- 	vsprintf(buf, fmt, arg);
-
- 	printf("%c !!panic!! %s", MAG_CH_PANIC, buf);
-
- 	/* should never arrive here */
-	__asm__ __volatile__("ud2");
-}
