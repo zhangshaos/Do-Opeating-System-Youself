@@ -11,6 +11,17 @@ Date:		 	2019-7-16
 #include"struct_proc.h"
 
 
+/* assert macro */
+#define ASSERT
+#ifdef ASSERT
+/* lib/misc.c */
+void assertion_failure(char *exp, char *file, char *base_file, int line);
+#define assert(exp)  if (exp) ; \
+        else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__)
+#else
+#define assert(exp)
+#endif
+
 
 /* clock.c */
 PUBLIC void clock_handler(int irq);
@@ -28,6 +39,9 @@ PUBLIC void keyboard_read(TTY* p_tty);
 PUBLIC void task_tty();
 PUBLIC void respond_key(TTY* p_tty, u32 key);
 
+/* systask.c */
+PUBLIC void     task_sys();
+
 /* console.c */
 PUBLIC void out_char(CONSOLE* p_con, char ch);
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
@@ -37,10 +51,9 @@ PUBLIC int  is_current_console(CONSOLE* p_con);
 
 /* printf.c */
 PUBLIC  int     printf(const char *fmt, ...);
-
-/* vsprintf.c */
 PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
-
+PUBLIC	int	    sprintf(char *buf, const char *fmt, ...);
+PUBLIC	int	    sys_printx(int _unused1, int _unused2, char* s, PROCESS* p_proc);
 
 /* exception_handler.c */
 PUBLIC void exception_handler(int vec_no,int err_code,int eip,int cs,int eflags);
@@ -89,20 +102,34 @@ PUBLIC	void    hwint13();
 PUBLIC	void    hwint14();
 PUBLIC	void    hwint15();
 
+/* mm.c */
+ inline u32     seg2phys(u16 seg);
+ inline u32     vir2phys(u32 seg_base, void *vir);
+ inline int     ldt_seg_linear(PROCESS* p, int idx);
+ inline void*   va2la(int pid, void* va);
+
 
 /* proc.c */
 PUBLIC	void 	schedule();
 PUBLIC	void 	TestA();
 PUBLIC 	void	TestB();
 PUBLIC	void	TestC();
+#define proc2pid(x) (x - proc_table)
+
+/* ipc.c */
+PUBLIC	void	reset_msg(MESSAGE* p);
+PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
+PUBLIC	void	dump_proc(PROCESS* p);
+PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
+PUBLIC	int	    sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p);
+
 
 
 /* syscall.asm */
 PUBLIC	void 	sys_call();
-PUBLIC	int		get_ticks();
-PUBLIC  void    write(char* buf, int len);
-PUBLIC  int     sys_write(char* buf, int len, PROCESS* p_proc);
-
+PUBLIC  void    panic(const char *fmt, ...);
+PUBLIC	int	    sendrec(int function, int src_dest, MESSAGE* p_msg);
+PUBLIC	int	    printx(char* str);
 
 
 /* lib/memory.asm */
@@ -126,3 +153,8 @@ PUBLIC void disable_irq(int irq);
 PUBLIC void enable_irq(int irq);
 PUBLIC void disable_int();  /* open or close Interupt. */
 PUBLIC void enable_int();
+
+/* lib/misc.c */
+PUBLIC void     spin(char * func_name);
+
+

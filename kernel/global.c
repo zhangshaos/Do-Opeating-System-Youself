@@ -55,7 +55,8 @@ PUBLIC	PROCESS		proc_table[NR_TASKS + NR_PROCS];
 
 /* descriptions for all Tasks & User-Process */
 PUBLIC	TASK		task_table[NR_TASKS] = {
-	{task_tty, STACK_SIZE_TTY, "tty"}
+	{task_tty, STACK_SIZE_TTY, "TTY"},
+	{task_sys, STACK_SIZE_SYS, "SYS"}
 	};
 
 PUBLIC  TASK    user_proc_table[NR_PROCS] = {
@@ -79,7 +80,7 @@ PUBLIC	CONSOLE		console_table[NR_CONSOLES];
 
 /* customed system call (int 90h) handler */
 PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
-	sys_get_ticks,
-	sys_write
+	sys_printx,	/* I/O moudle has been not part of IPC. */
+	sys_sendrec
 	};
 

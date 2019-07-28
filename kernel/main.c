@@ -30,22 +30,6 @@ PRIVATE void init_descriptor(DESCRIPTOR * p_desc, u32 base, u32 limit, u16 attri
 }
 
 
-/* 段选择符 -> 段基地址 */
-static inline u32 seg2phys(u16 seg)
-{
-	DESCRIPTOR* p_dest = &gdt[seg >> 3];
-
-	return (p_dest->base_high << 24) | (p_dest->base_mid << 16) | (p_dest->base_low);
-}
-
-
-/* 基址 + 偏移 → 物理地址 */
-static inline u32 vir2phys(u32 seg_base, void *vir)
-{
-	return (u32)(((u32)seg_base) + (u32)(vir));
-}
-
-
 
 
 /*======================================================================*
@@ -140,6 +124,7 @@ PUBLIC int kernel_main()
 		u8              privilege;
         u8              rpl;
         int             eflags;
+		int				priority;
 	/* 进程表初始化 */
 	for (int i = 0; i < NR_TASKS + NR_PROCS; i++) 
 	{
@@ -148,18 +133,22 @@ PUBLIC int kernel_main()
                         privilege = PRIVILEGE_TASK;
                         rpl       = RPL_TASK;
                         eflags    = 0x1202; /* IF=1, IOPL=1, bit 2 is always 1 */
+						priority  =	15;
                 }
                 else {                  /* 用户进程 */
                         p_task    = user_proc_table + (i - NR_TASKS);
                         privilege = PRIVILEGE_USER;
                         rpl       = RPL_USER;
                         eflags    = 0x202; /* IF=1, bit 2 is always 1 */
+						priority  =	5;
                 }
 
-		strcpy(p_proc->p_name, p_task->name);	// name of the process
+		/* 填充各个进程表的成员 */
+		strcpy(p_proc->name, p_task->name);	// name of the process
 		p_proc->pid = i;						// pid
 
 		p_proc->ldt_sel = selector_ldt;
+
 
 		/* 填充各个进程表中的LDT selector */
 		/* 填充进程的代码段选择子 */
@@ -174,7 +163,8 @@ PUBLIC int kernel_main()
 		       sizeof(DESCRIPTOR));
 		p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 
-		/* 填充进程表中的segment selector */
+		/* 填充进程表中的segment selector
+		 * cs->ldt[0], ds/es/ss/fs->ldt[1], gs->显存 */
 		p_proc->regs.cs	= ((8 * 0) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
 		p_proc->regs.ds	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
 		p_proc->regs.es	= ((8 * 1) & SA_RPL_MASK & SA_TI_MASK)	| SA_TIL | rpl;
@@ -183,11 +173,23 @@ PUBLIC int kernel_main()
 		p_proc->regs.gs	= (SELECTOR_KERNEL_GS & SA_RPL_MASK)	| rpl;
 
 		/* 填充进程表中进程的 EIP 和 ESP (ring1-3) */
-		p_proc->regs.eip = (u32)p_task->initial_eip;
-		p_proc->regs.esp = (u32)p_task_stack;
+		p_proc->regs.eip	= (u32)p_task->initial_eip;
+		p_proc->regs.esp 	= (u32)p_task_stack;
 		p_proc->regs.eflags = eflags;
 
-		p_proc->nr_tty = 0;		/* 所有进程默认使用tty0 */
+		p_proc->nr_tty 		= 0;		/* 所有进程默认使用tty0 */
+
+		/* 填充IPC相关 */
+ 		p_proc->p_flags 	= 0;	/* ready */
+		p_proc->p_msg 		= 0;
+		p_proc->p_recvfrom 	= NO_TASK;
+		p_proc->p_sendto 	= NO_TASK;
+		p_proc->has_int_msg = 0;
+		p_proc->q_sending 	= 0;
+		p_proc->next_sending = 0;
+
+		/* 进程调用,进程优先级 */
+		p_proc->ticks = p_proc->priority = priority;
 
 		p_task_stack -= p_task->stacksize;
 		p_proc++;
@@ -195,11 +197,7 @@ PUBLIC int kernel_main()
 		selector_ldt += 1 << 3;
 	}
 
-	proc_table[0].ticks = proc_table[0].priority = 	500;	/* 0.5秒 */
-	proc_table[1].ticks = proc_table[1].priority =  500;
-	proc_table[2].ticks = proc_table[2].priority =  500;
-	proc_table[3].ticks = proc_table[3].priority =  500;
-
+		/* user process take up TTY 1 */
         proc_table[1].nr_tty = 1;
         proc_table[2].nr_tty = 1;
         proc_table[3].nr_tty = 1;
@@ -222,7 +220,7 @@ PUBLIC int kernel_main()
 	restart(); /* 执行p_proc_ready->指向的进程 */
 
 
-	disp_str("\n\n\n\n\n\n\n\n\n\n\n\n!!!Task Over!!!\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"); /* in common, you can't come on here. */
+	/* WARNING: You can't come here! */
 	while(1)
 	{
 		/* nop */

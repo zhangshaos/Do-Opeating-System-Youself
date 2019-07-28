@@ -20,7 +20,8 @@ Date:		 	2019-6-29
 #define	TRUE	1
 #define	FALSE	0
 
-
+/* 字符串最大长度 */
+#define	STR_DEFAULT_LEN	1024
 
 /* GDT 和 IDT 中描述符的个数 */
 #define	GDT_SIZE	128
@@ -28,6 +29,9 @@ Date:		 	2019-6-29
 
 /* 每个 LDT 中描述符的个数 */
 #define LDT_SIZE    2   /* 一个数据段,一个代码段描述符 */
+/* descriptor indices in LDT */
+#define INDEX_LDT_C     0
+#define INDEX_LDT_RW    1
 
 /* 权限 */
 #define	PRIVILEGE_KRNL	0
@@ -43,5 +47,30 @@ Date:		 	2019-6-29
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */
 
+ /* IPC */
+#define SEND		1
+#define RECEIVE		2
+#define BOTH		3	/* BOTH = (SEND | RECEIVE) */
+
+/* magic chars used by `printx' */
+#define MAG_CH_PANIC	'\002'
+#define MAG_CH_ASSERT	'\003'
+
+ /**
+ * @enum msgtype
+ * @brief MESSAGE types
+ */
+enum msgtype {
+	/* 
+	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
+	 * be sent to some tasks
+	 */
+	HARD_INT = 1,
+
+ 	/* SYS task */
+	GET_TICKS,
+};
+
+#define	RETVAL		u.m3.m3i1	/* what's this ? refer to type.h */
 
 #endif /* _ORANGES_CONST_H_ */

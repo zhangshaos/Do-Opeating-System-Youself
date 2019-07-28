@@ -34,9 +34,10 @@ Date:		 	2019-7-21
 #define BLUE    0x1     /* 0001 */
 #define FLASH   0x80    /* 1000 0000 */
 #define BRIGHT  0x08    /* 0000 1000 */
-#define MAKE_COLOR(x,y) (x | y) /* MAKE_COLOR(Background,Foreground) */
-#define DEFAULT_CHAR_COLOR	0x07	/* 0000 0111 黑底白字 */
-
+#define MAKE_COLOR(bg,fg) (bg<<4 | fg) /* MAKE_COLOR(Background,Foreground) */
+#define DEFAULT_CHAR_COLOR	(MAKE_COLOR(BLACK, WHITE))
+#define GRAY_CHAR			(MAKE_COLOR(BLACK, BLACK) | BRIGHT)
+#define RED_CHAR			(MAKE_COLOR(BLUE, RED) | BRIGHT)
 
 /* CONSOLE */
 typedef struct s_console

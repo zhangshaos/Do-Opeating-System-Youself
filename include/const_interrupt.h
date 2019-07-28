@@ -50,7 +50,7 @@ Date:		 	2019-7-15
 
 /* 系统调用 */
 #define INT_VECTOR_SYS_CALL     0x90
-#define NR_SYS_CALL             2
+#define NR_SYS_CALL             3
 
 
 /* 8259A interrupt controller ports. */

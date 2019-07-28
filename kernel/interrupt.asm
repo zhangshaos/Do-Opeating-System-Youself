@@ -269,9 +269,16 @@ save:
         push    es      ;  | 保存原寄存器值,保存在PCB中
         push    fs      ;  |
         push    gs      ; /
+
+		mov		esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
+							; 不要用栈, 否则会破坏PCB
+
         mov     dx, ss
         mov     ds, dx
         mov     es, dx
+		mov 	fs,	dx
+
+		mov		edx, esi	; 恢复edx
 
         mov     esi, esp                    ;esi = 进程表(PCB)起始地址
 

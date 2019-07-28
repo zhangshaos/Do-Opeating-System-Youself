@@ -25,17 +25,26 @@ PUBLIC void schedule()
 		/* 寻找剩余ticks(优先级)最多的进程 */
 		for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
 		{
-			if (p->ticks > greatest_ticks) {
-				greatest_ticks = p->ticks;
-				p_proc_ready = p;
+			/* 只选择"ready"的进程 */
+			if(0 == p->p_flags)
+			{
+				if (p->ticks > greatest_ticks)
+				{
+					greatest_ticks = p->ticks;
+					p_proc_ready = p;
+				}
 			}
 		}
 
 		/* 如果所有进程都结束了, 重新跑一遍 */
 		if (0 == greatest_ticks) 
 		{
-			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) {
-				p->ticks = p->priority;
+			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
+			{
+				if(0 == p->p_flags)
+				{
+					p->ticks = p->priority;
+				}
 			}
 		}
 	}

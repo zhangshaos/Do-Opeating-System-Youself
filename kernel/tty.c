@@ -188,7 +188,7 @@ PUBLIC void respond_key(TTY* p_tty, u32 key)
 /*======================================================================*
                               tty_write
 	===============================================================
-					由sys_write()系统调用中断处理程序调用
+						系统调用中断处理程序调用
 *======================================================================*/
 PUBLIC void tty_write(TTY* p_tty, char* buf, int len)
 {
@@ -202,12 +202,3 @@ PUBLIC void tty_write(TTY* p_tty, char* buf, int len)
         }
 }
 
-
-/*======================================================================*
-                              sys_write
-*======================================================================*/
-PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc)
-{
-        tty_write(&tty_table[p_proc->nr_tty], buf, len);
-        return 0;
-}
