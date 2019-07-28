@@ -36,5 +36,7 @@ make clean #clean
 ### July 22th, 2019
 * Add standard I/O and support 3 console.
 
+### July 28th, 2019
 
+* Adopt micro-kernel design, add IPC (inner process communication). Now, system-call will adopt IPC to communicate with  SYS_TASK to get some useful info wanted.
 
