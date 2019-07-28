@@ -13,7 +13,7 @@ GCC_FLAGS		=	-I include/ -c -m32 -fno-stack-protector -fno-builtin
 # -m 		: 	模拟环境
 # -Ttext 	:	相当与org汇编指令
 # -s 		:	清除符号信息
-LD_FLAGS		=	-s -m elf_i386 -Ttext $(ENTRYPOINT)
+LD_FLAGS		=	-m elf_i386 -Ttext $(ENTRYPOINT)
 
 
 # 编译后文件
@@ -27,15 +27,20 @@ OBJS	= 	kernel/kernel.o\
 			kernel/global.o\
 			kernel/init_idt.o\
 			kernel/interrupt.o\
+			kernel/ipc.o\
 			kernel/keyboard.o\
 			kernel/keymap.o\
 			kernel/main.o\
+			kernel/mm.o\
 			kernel/proc.o\
 			kernel/syscall.o\
+			kernel/syscallc.o\
+			kernel/systask.o\
 			kernel/tty.o\
 			lib/klib.o\
 			lib/kliba.o\
 			lib/memory.o\
+			lib/misc.o\
 			lib/printf.o
 
 # 动作
@@ -91,6 +96,9 @@ kernel/init_idt.o:	kernel/init_idt.c include/const.h include/const_interrupt.h i
 kernel/interrupt.o:	kernel/interrupt.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
+kernel/ipc.o:	kernel/ipc.c include/type.h include/const.h include/struct_proc.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
 kernel/kernel.o:	kernel/kernel.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
@@ -103,11 +111,20 @@ kernel/keymap.o:	kernel/keymap.c include/const.h include/type.h include/struct_k
 kernel/main.o:	kernel/main.c include/type.h include/const.h include/global.h include/struct_descript.h include/const_interrupt.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
+kernel/mm.o:	kernel/mm.c include/type.h include/struct_proc.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
 kernel/proc.o:	kernel/proc.c include/const.h include/struct_proc.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/syscall.o:	kernel/syscall.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
+
+kernel/syscallc.o:	kernel/syscallc.c include/type.h include/const.h include/struct_proc.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
+kernel/systask.o:	kernel/systask.c include/const.h include/type.h include/struct_proc.h include/global.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/tty.o:	kernel/tty.c include/const.h include/type.h include/struct_tty.h include/struct_keyboard.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
@@ -120,6 +137,9 @@ lib/kliba.o:lib/kliba.asm include/const.inc
 
 lib/memory.o:	lib/memory.asm
 		nasm $< $(NASM_FLAGS_ELF) -o $@
+
+lib/misc.o:	lib/misc.c include/const.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
 
 lib/printf.o:	lib/printf.c include/type.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@

@@ -3,6 +3,7 @@
 
 
 #include "const.h"
+#include "func_proto.h"
 
 
 
@@ -15,7 +16,7 @@
  *****************************************************************************/
 PUBLIC void spin(char * func_name)
 {
-	printl("\nspinning in %s ...\n", func_name);
+	printf("\nspinning in %s ...\n", func_name);
 	while (1) 
 	{
 		/* suspend... */
@@ -35,13 +36,13 @@ PUBLIC void spin(char * func_name)
  *****************************************************************************/
 PUBLIC void assertion_failure(char *exp, char *file, char *base_file, int line)
 {
-	printl("%c  assert(%s) failed: file: %s, base_file: %s, ln%d",
+	printf("%c  assert(%s) failed: file: %s, base_file: %s, ln%d",
 	       MAG_CH_ASSERT,
 	       exp, file, base_file, line);
 
  	/**
 	 * If assertion fails in a TASK, the system will halt before
-	 * printl() returns. If it happens in a USER PROC, printl() will
+	 * printf() returns. If it happens in a USER PROC, printf() will
 	 * return like a common routine and arrive here. 
 	 * @see sys_printx()
 	 * 

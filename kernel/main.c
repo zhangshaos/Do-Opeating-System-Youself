@@ -198,9 +198,9 @@ PUBLIC int kernel_main()
 	}
 
 		/* user process take up TTY 1 */
-        proc_table[1].nr_tty = 1;
         proc_table[2].nr_tty = 1;
         proc_table[3].nr_tty = 1;
+        proc_table[4].nr_tty = 1;
 
 
 	/* 准备进程调度 */

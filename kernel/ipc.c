@@ -458,13 +458,13 @@ PRIVATE int deadlock(int src, int dest)
             {
 				/* print the chain */
 				p = proc_table + dest;
-				printl("=_=%s", p->name);
+				printf("=_=%s", p->name);
 				do {
 					assert(p->p_msg);
 					p = proc_table + p->p_sendto;
-					printl("->%s", p->name);
+					printf("->%s", p->name);
 				} while (p != proc_table + src);
-				printl("=_=");
+				printf("=_=");
 
  				return 1;
 			}
@@ -504,7 +504,7 @@ PUBLIC void dump_proc(PROCESS* p)
 		disp_color_str(info, text_color);
 	}
 
- 	/* printl("^^"); */
+ 	/* printf("^^"); */
 
  	disp_color_str("\n\n", text_color);
 	sprintf(info, "ANY: 0x%x.\n", ANY); disp_color_str(info, text_color);
@@ -533,7 +533,7 @@ PUBLIC void dump_proc(PROCESS* p)
 PUBLIC void dump_msg(const char * title, MESSAGE* m)
 {
 	int packed = 0;
-	printl("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
+	printf("{%s}<0x%x>{%ssrc:%s(%d),%stype:%d,%s(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x)%s}%s",  //, (0x%x, 0x%x, 0x%x)}",
 	       title,
 	       (int)m,
 	       packed ? "" : "\n        ",

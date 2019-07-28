@@ -5,6 +5,7 @@
 #include "type.h"
 #include "struct_proc.h"
 #include "global.h"
+#include "func_proto.h"
 
 
 /** ======================== task_sys ========================

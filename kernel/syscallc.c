@@ -6,6 +6,7 @@
 #include "type.h"
 #include "const.h"
 #include "struct_proc.h"
+#include "func_proto.h"
 
 
 /* 下面是系统调用 */
@@ -41,7 +42,7 @@ PUBLIC void panic(const char *fmt, ...)
 
  	vsprintf(buf, fmt, arg);
 
- 	printl("%c !!panic!! %s", MAG_CH_PANIC, buf);
+ 	printf("%c !!panic!! %s", MAG_CH_PANIC, buf);
 
  	/* should never arrive here */
 	__asm__ __volatile__("ud2");

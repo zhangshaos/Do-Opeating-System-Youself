@@ -69,7 +69,7 @@ typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 }STACK_FRAME;
 
 /* 进程 */
-typedef struct s_proc {
+typedef struct Proc {
 	STACK_FRAME regs;	/* process registers saved in stack frame */
 
 	u16 ldt_sel;	/* gdt selector giving ldt base and limit */
@@ -97,9 +97,9 @@ typedef struct s_proc {
 						 * 	   系统在得知中断发生后, 将此位置设定为'1'
 						 */
 
- 	PROCESS *q_sending;		/* pointer to the first process that deliver msg to this process */
+ 	struct Proc *q_sending;		/* pointer to the first process that deliver msg to this process */
 
- 	PROCESS *next_sending;	/* the next process that deliver msg to the destination of this process  */
+ 	struct Proc *next_sending;	/* the next process that deliver msg to the destination of this process  */
 
 	int nr_tty;		/* just for simplifying, every Process have its TTY. */
 }PROCESS;

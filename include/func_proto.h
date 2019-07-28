@@ -5,10 +5,11 @@ Copyright:		Chauncey Zhang
 Date:		 	2019-7-16
 ===============================================================================================*/
 
-#include"const.h"
-#include"type.h"
-#include"struct_tty.h"
-#include"struct_proc.h"
+#include "const.h"
+#include "type.h"
+#include "struct_tty.h"
+#include "struct_proc.h"
+#include "global.h"
 
 
 /* assert macro */
@@ -102,12 +103,6 @@ PUBLIC	void    hwint13();
 PUBLIC	void    hwint14();
 PUBLIC	void    hwint15();
 
-/* mm.c */
- inline u32     seg2phys(u16 seg);
- inline u32     vir2phys(u32 seg_base, void *vir);
- inline int     ldt_seg_linear(PROCESS* p, int idx);
- inline void*   va2la(int pid, void* va);
-
 
 /* proc.c */
 PUBLIC	void 	schedule();
@@ -127,10 +122,12 @@ PUBLIC	int	    sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p);
 
 /* syscall.asm */
 PUBLIC	void 	sys_call();
-PUBLIC  void    panic(const char *fmt, ...);
 PUBLIC	int	    sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	    printx(char* str);
 
+/* syscallc.c */
+PUBLIC  int     get_ticks();
+PUBLIC  void    panic(const char *fmt, ...);
 
 /* lib/memory.asm */
 PUBLIC	void*	memcpy(void* p_dst, void* p_src, int size);
@@ -158,3 +155,37 @@ PUBLIC void enable_int();
 PUBLIC void     spin(char * func_name);
 
 
+
+
+/* mm.c */
+/**
+ * emmm, inline func must be here...
+ * otherwise......
+ */
+static  inline  u32     seg2phys(u16 seg)
+{
+	DESCRIPTOR* p_dest = &gdt[seg >> 3];
+	return (p_dest->base_high << 24) | (p_dest->base_mid << 16) | (p_dest->base_low);
+};
+static  inline  u32     vir2phys(u32 seg_base, void *vir)
+{
+	return (u32)(((u32)seg_base) + (u32)(vir));
+};
+static  inline  int     ldt_seg_linear(PROCESS* p, int idx)
+{
+	DESCRIPTOR * d = p->ldts + idx;
+	return d->base_high << 24 | d->base_mid << 16 | d->base_low;
+}
+static  inline  void*   va2la(int pid, void* va)
+{
+	PROCESS* p = proc_table + pid;
+
+ 	u32 seg_base = ldt_seg_linear(p, INDEX_LDT_RW);
+	u32 la = seg_base + (u32)va;
+
+ 	if (pid < NR_TASKS + NR_PROCS) {
+		assert(la == (u32)va);
+	}
+
+ 	return (void*)la;
+};
