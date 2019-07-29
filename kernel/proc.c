@@ -440,7 +440,7 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			assert(p_from->p_sendto == proc2pid(p_who_wanna_recv));
 		}
 	}
-	else {
+	else if(src >= 0 && src < NR_TASKS+NR_PROCS){
 		/* p_who_wanna_recv wants to receive a message from
 		 * a certain proc: src.
 		 */
