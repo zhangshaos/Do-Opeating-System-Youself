@@ -13,7 +13,8 @@ Other:			参见<Orange's 一个操作系统的实现>
 #define	EXTERN
 #endif
 
-#include"tty.h"
+#include "tty.h"
+#include "fs.h"
 
 EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
 
@@ -38,3 +39,6 @@ extern  TASK        user_proc_table[];
 extern	irq_handler	irq_table[];	/* array of interupt handler */
 extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and private CONSOLE(ouput) */
 extern  CONSOLE     console_table[];/* display characters on screen */
+
+/* FS */
+extern	struct dev_drv_map	dd_map[];

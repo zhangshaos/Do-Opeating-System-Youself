@@ -10,6 +10,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "const.h"
 #include "protect.h"
 #include "string.h"
+#include "fs.h"
 #include "proc.h"
 #include "tty.h"
 #include "console.h"

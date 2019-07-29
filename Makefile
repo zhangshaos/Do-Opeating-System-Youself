@@ -28,9 +28,10 @@ ORANGESKERNEL	= kernel.bin
 OBJS		= kernel/kernel.o kernel/syscall.o kernel/start.o kernel/main.o\
 			kernel/clock.o kernel/keyboard.o kernel/tty.o kernel/console.o\
 			kernel/i8259.o kernel/global.o kernel/protect.o kernel/proc.o\
-			kernel/systask.o\
+			kernel/systask.o kernel/hd.o\
 			kernel/printf.o kernel/vsprintf.o\
-			lib/kliba.o lib/klib.o lib/string.o lib/misc.o
+			lib/kliba.o lib/klib.o lib/string.o lib/misc.o\
+			fs/main.o
 DASMOUTPUT	= kernel.bin.asm
 
 # All Phony Targets
@@ -121,6 +122,9 @@ kernel/vsprintf.o: kernel/vsprintf.c
 kernel/systask.o: kernel/systask.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+kernel/hd.o: kernel/hd.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 lib/klib.o: lib/klib.c include/type.h include/const.h include/protect.h include/string.h include/proc.h include/proto.h \
 			include/global.h
 	$(CC) $(CFLAGS) -o $@ $<
@@ -133,3 +137,6 @@ lib/kliba.o : lib/kliba.asm
 
 lib/string.o : lib/string.asm
 	$(ASM) $(ASMKFLAGS) -o $@ $<
+
+fs/main.o: fs/main.c
+	$(CC) $(CFLAGS) -o $@ $<
