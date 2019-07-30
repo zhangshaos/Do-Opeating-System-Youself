@@ -60,8 +60,8 @@ struct dev_drv_map dd_map[] = {
 	{INVALID_DRIVER},	/**< 0 : Unused */
 	{INVALID_DRIVER},	/**< 1 : Reserved for floppy driver */
 	{INVALID_DRIVER},	/**< 2 : Reserved for cdrom driver */
-	{TASK_HD},		/**< 3 : Hard disk */
-	{TASK_TTY},		/**< 4 : TTY */
+	{TASK_HD},			/**< 3 : Hard disk */
+	{TASK_TTY},			/**< 4 : TTY */
 	{INVALID_DRIVER}	/**< 5 : Reserved for scsi disk driver */
 };
 

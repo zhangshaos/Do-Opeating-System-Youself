@@ -47,11 +47,20 @@ typedef struct s_proc {
 	u32 pid;                   /* process id passed in from MM */
 	char name[16];				/* name of the process */
 
+	/* p_status.(ready, sending, receiving) */
 	int  p_flags;              /* process flags. A proc is runnable iff p_flags==0*/
 
-	MESSAGE * p_msg;
+	/**
+	 * 本进程持有的消息.
+	 * SENDING状态:	表示此进程正在发送的消息(还没有目标进程接受,所以此进程阻塞)
+	 * RECEIVING状态:表示此进程想要接受的消息(还没有进程发送,所以此进程阻塞)
+	 * REARY状态:	p_hold_msg = 0,因为此进程没有消息要处理 
+	 */
+	MESSAGE * p_hold_msg;
 
+	/* p_want_recvform */
 	int p_recvfrom;				/* 'p' means index of proc_table[] */
+	/* p_want_sendto */
 	int p_sendto;
 
 	int has_int_msg;           /* 如果非0, 表示该进程有一个待处理的硬件中断 */

@@ -226,14 +226,6 @@ enum msgtype {
 #define	MAJOR(x)		((x >> MAJOR_SHIFT) & 0xFF)
 #define	MINOR(x)		(x & 0xFF)
 
-/* device numbers of hard disk */
-#define	MINOR_hd1a		0x10
-#define	MINOR_hd2a		0x20
-#define	MINOR_hd2b		0x21
-#define	MINOR_hd3a		0x30
-#define	MINOR_hd4a		0x40
-
-#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)	/* 3, 0x21 */
 
 #define	INVALID_INODE		0
 #define	ROOT_INODE			1
@@ -253,6 +245,15 @@ enum msgtype {
 #define	MAX_PRIM		(MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
 
 #define	MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES)
+
+/* device numbers of hard disk */
+#define	MINOR_hd1a		0x10
+#define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
+
+/* 使用bximage时,指定了80m.img5是启动盘 */
+#define	MINOR_BOOT			MINOR_hd2a
+
+#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
 
 #define	P_PRIMARY	0
 #define	P_EXTENDED	1

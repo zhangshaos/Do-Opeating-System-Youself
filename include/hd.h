@@ -25,7 +25,8 @@
 #ifndef	_ORANGES_HD_H_
 #define	_ORANGES_HD_H_
 
-/**
+/** 硬盘分区表结构
+ * 此结构构成硬盘分区表(参考Orange's-P.339-表9.3分区表结构)
  * @struct part_ent
  * @brief  Partition Entry struct.
  *
@@ -43,8 +44,10 @@
  *   It is essentially a link list with many tricks. See
  *   http://en.wikipedia.org/wiki/Extended_boot_record for details.
  */
-struct part_ent {
-	u8 boot_ind;		/**
+struct part_ent 
+{
+	/* 分区状态:80h=可以引导, 00h=不可以引导, 其他=违法 */
+	u8 boot_ind; /**
 				 * boot indicator
 				 *   Bit 7 is the active partition flag,
 				 *   bits 6-0 are zero (when not zero this
@@ -54,10 +57,12 @@ struct part_ent {
 				 *   hard disk).
 				 */
 
+	/* 起始磁头号 */
 	u8 start_head;		/**
 				 * Starting Head
 				 */
 
+	/* 起始扇区号(仅仅使用了低6位,高2位表示起始柱面号的第8.9位) */
 	u8 start_sector;	/**
 				 * Starting Sector.
 				 *   Only bits 0-5 are used. Bits 6-7 are
@@ -65,6 +70,7 @@ struct part_ent {
 				 *   Cylinder field.
 				 */
 
+	/* 起始柱面号的低8位(0-7位) */
 	u8 start_cyl;		/**
 				 * Starting Cylinder.
 				 *   This field contains the lower 8 bits
@@ -73,6 +79,7 @@ struct part_ent {
 				 *   value of 1023.
 				 */
 
+	/* 分区类型 */
 	u8 sys_id;		/**
 				 * System ID
 				 * e.g.
@@ -81,18 +88,21 @@ struct part_ent {
 				 *   83: Linux
 				 */
 
+    /* 结束磁头号 */
 	u8 end_head;		/**
 				 * Ending Head
 				 */
 
-	u8 end_sector;		/**
+	/* 结束扇区号(仅仅使用了低6位,高2位表示结束柱面号的第8.9位) */
+	u8 end_sector;	/**
 				 * Ending Sector.
 				 *   Only bits 0-5 are used. Bits 6-7 are
 				 *   the upper two bits for the Ending
 				 *    Cylinder field.
 				 */
 
-	u8 end_cyl;		/**
+    /* 结束柱面号低8位 */
+	u8 end_cyl;	 /**
 				 * Ending Cylinder.
 				 *   This field contains the lower 8 bits
 				 *   of the cylinder value. Ending cylinder
@@ -100,12 +110,14 @@ struct part_ent {
 				 *   value of 1023.
 				 */
 
-	u32 start_sect;	/**
+	/* 起始扇区的LBA */
+	u32 start_sect;/**
 				 * starting sector counting from
 				 * 0 / Relative Sector. / start in LBA
 				 */
 
-	u32 nr_sects;		/**
+	/* 扇区数目 */
+	u32 nr_sects;/**
 				 * nr of sectors in partition
 				 */
 
@@ -240,34 +252,36 @@ struct part_ent {
 #define REG_DRV_ADDR	0x3F7		/*	Drive Address			I		*/
 
 
+/* 对硬盘操作的寄存器组 */
 struct hd_cmd {
-	u8	features;
-	u8	count;
+	u8	features;	/* Error/Features 寄存器读/写数据 */
+	u8	count;		/* Sector Count 寄存器读/写数据 */
 	u8	lba_low;
 	u8	lba_mid;
 	u8	lba_high;
-	u8	device;
-	u8	command;
+	u8	device;		/* Device 寄存器读/写数据 */
+	u8	command;	/* Status/Command 寄存器读/写数据 */
 };
 
+
+
+/* 硬盘分区信息中的分区起始扇区sector和分区所占扇区个数 */
 struct part_info {
 	u32	base;	/* # of start sector (NOT byte offset, but SECTOR) */
 	u32	size;	/* how many sectors in this partition (NOT byte size, but SECTOR number) */
 };
 
-/* main drive struct, one entry per drive */
+
+/* main drive struct, one entry per drive
+ * 某个硬盘中所有分区(主分区和扩展分区(其中的逻辑分区))的分区信息
+ *  */
 struct hd_info
 {
-	/* int			cylinders; */
-	/* int			heads; */
-	/* int			sectors; */
-	/* int			precomp; */
-	/* int			lzone; */
-	/* int			ctl; */
-	int			open_cnt;
+	int				open_cnt;
 	struct part_info	primary[NR_PRIM_PER_DRIVE];
 	struct part_info	logical[NR_SUB_PER_DRIVE];
 };
+
 
 
 /***************/

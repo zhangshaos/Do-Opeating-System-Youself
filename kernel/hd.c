@@ -21,14 +21,51 @@
 
 
 PRIVATE void	init_hd();
+PRIVATE void	hd_open(int device);
 PRIVATE void	hd_cmd_out(struct hd_cmd* cmd);
+PRIVATE void	get_part_table(int drive, int sect_nr, struct part_ent * entry);
+PRIVATE void	partition(int device, int style);
+PRIVATE void	print_hdinfo(struct hd_info * hdi);
 PRIVATE int		waitfor(int mask, int val, int timeout);
 PRIVATE void	interrupt_wait();
 PRIVATE	void	hd_identify(int drive);
 PRIVATE void	print_identify_info(u16* hdinfo);
 
-PRIVATE	u8	hd_status;
-PRIVATE	u8	hdbuf[SECTOR_SIZE * 2];
+#define	DRV_OF_DEV(dev) (dev <= MAX_PRIM ? \
+			 dev / NR_PRIM_PER_DRIVE : \
+			 (dev - MINOR_hd1a) / NR_SUB_PER_DRIVE)
+
+
+/* 内部要用的的暂时数据 */
+PRIVATE	u8				hd_status;
+PRIVATE	u8				hdbuf[SECTOR_SIZE * 2];
+PRIVATE	struct hd_info	hd_info[1];
+
+
+
+/*****************************************************************************
+ *                                hd_handler
+ *****************************************************************************/
+/**
+ * <Ring 0> Interrupt handler.
+ * 
+ * @param irq  IRQ nr of the disk interrupt.
+ *****************************************************************************/
+PUBLIC void hd_handler(int irq)
+{
+	/*
+	 * Interrupts are cleared when the host
+	 *   - reads the Status Register,
+	 *   - issues a reset, or
+	 *   - writes to the Command Register.
+	 */
+		//printf("hd_handler() wait for REG_STATUS\n");
+	hd_status = in_byte(REG_STATUS);
+		//printf("hd_handler() come\n");
+	inform_int(TASK_HD);
+
+		//printf("hd_handler() over\n");
+}
 
 
 /*****************************************************************************
@@ -48,12 +85,15 @@ PUBLIC void task_hd()
 	{
 		send_recv(RECEIVE, ANY, &msg);
 
+			//printf("task_hd() receive msg\n");
+
 		int src = msg.source;
 
 		switch (msg.type)
 		{
 		case DEV_OPEN:
-			hd_identify(0);
+			//printf("task_hd() receive DEV_OPEN msg\n");
+			hd_open(msg.DEVICE);
 			break;
 
 		default:
@@ -62,9 +102,18 @@ PUBLIC void task_hd()
 			break;
 		}
 
+			//printf("task_hd() send msg back to task_fs()\n");
 		send_recv(SEND, src, &msg);
 	}
 }
+
+
+
+
+
+
+
+
 
 /*****************************************************************************
  *                                init_hd
@@ -83,6 +132,202 @@ PRIVATE void init_hd()
 	put_irq_handler(AT_WINI_IRQ, hd_handler);
 	enable_irq(CASCADE_IRQ);
 	enable_irq(AT_WINI_IRQ);
+
+	/* 将所有硬盘的信息清零 */
+	for(int i = 0; i < (sizeof(hd_info) / sizeof(hd_info[0])); i++)
+	{
+		memset(&hd_info[i], 0, sizeof(hd_info[0]));
+	}
+	hd_info[0].open_cnt = 0;
+}
+
+/*****************************************************************************
+ *                                hd_open
+ *****************************************************************************/
+/**
+ * <Ring 1> This routine handles DEV_OPEN message. It identify the drive
+ * of the given device and read the partition table of the drive if it
+ * has not been read.
+ * 
+ * @param device The device to be opened.
+ *****************************************************************************/
+PRIVATE void hd_open(int device)
+{
+	int drive = DRV_OF_DEV(device);
+	assert(drive == 0);	/* only one drive */
+
+	hd_identify(drive);
+
+	if (hd_info[drive].open_cnt++ == 0)
+	{
+		//printf("start to call partition()\n");
+		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
+		//printf("start to invoke print_hdinfo()\n");
+		print_hdinfo(&hd_info[drive]);
+	}
+}
+
+/*****************************************************************************
+ *                                get_part_table
+ *****************************************************************************/
+/**
+ * <Ring 1> Get a partition table of a drive.
+ * 
+ * @param drive   Drive nr (0 for the 1st disk, 1 for the 2nd, ...)n
+ * @param sect_nr The sector at which the partition table is located.
+ * @param entry   Ptr to part_ent struct.
+ *****************************************************************************/
+PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
+{
+	struct hd_cmd cmd;
+	cmd.features	= 0;
+	cmd.count	= 1;
+	cmd.lba_low	= sect_nr & 0xFF;
+	cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
+	cmd.lba_high	= (sect_nr >> 16) & 0xFF;
+	cmd.device	= MAKE_DEVICE_REG(1, /* LBA mode*/
+					  drive,
+					  (sect_nr >> 24) & 0xF);
+	cmd.command	= ATA_READ;
+	hd_cmd_out(&cmd);
+		//printf("get_part_table()-1 : call intertupt_wait()\n");
+		//milli_delay(10); 
+		/**
+		 * @Phenomenon:
+		 * Here is a very strange bug...
+		 * If you invoke milidelay(),
+		 * the IPC moudle -> msg_receive() : assert(p_who_wanna_recv->has_int_msg == 0)
+		 * will cause fault...
+		 * 
+		 * @Explanation:
+		 * When you call mili_dalay(),after msg_send(task_hd,task_sys,msg)
+		 * exec-flow comes to msg_receive(task_hd,task_sys,msg) to get result of get_ticks()
+		 * and in msg_receive(...) the hard disk interrupt and set 
+		 */
+	interrupt_wait();
+
+		//printf("get_part_table()-2 : get msg and call port_read()\n");
+	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+		//printf("get_part_table()-3 : after call port_read()\n");
+	memcpy(entry,
+	       hdbuf + PARTITION_TABLE_OFFSET,
+	       sizeof(struct part_ent) * NR_PART_PER_DRIVE);
+}
+
+/*****************************************************************************
+ *                                partition
+ *****************************************************************************/
+/**
+ * <Ring 1> This routine is called when a device is opened. It reads the
+ * partition table(s) and fills the hd_info struct.
+ * 
+ * @param device Device nr.
+ * @param style  P_PRIMARY or P_EXTENDED.
+ *****************************************************************************/
+PRIVATE void partition(int device, int style)
+{
+	int drive = DRV_OF_DEV(device);
+	struct hd_info * hdi = &hd_info[drive];
+
+	/* 硬盘分区表 */
+	struct part_ent part_tbl[NR_SUB_PER_DRIVE];
+
+	if (style == P_PRIMARY)
+	{
+			//printf("master partition() invoke get_part_table()\n");
+		get_part_table(drive, drive, part_tbl);
+			//printf("master partition() over get_part_table()\n");
+
+		/* 主分区个数 */
+		int nr_prim_parts = 0;
+		for (int i = 0; i < NR_PART_PER_DRIVE; i++) 
+		{ 	/* 0~3 */
+			if (part_tbl[i].sys_id == NO_PART) 
+				continue;
+
+			nr_prim_parts++;
+			int dev_nr = i + 1;		  /* 1~4, 因为hd_info[0]表示的是整块硬盘,不是分区 */
+			hdi->primary[dev_nr].base = part_tbl[i].start_sect;
+			hdi->primary[dev_nr].size = part_tbl[i].nr_sects;
+
+			if (part_tbl[i].sys_id == EXT_PART) /* extended */
+			{
+					//printf("partition() handle P_EXTENDED\n");
+				partition(device + dev_nr, P_EXTENDED);
+			}
+		}
+
+		/* 主分区个数至少为1 */
+		assert(nr_prim_parts != 0);
+
+			//printf("partition() master P over.\n");
+	}
+	else if (style == P_EXTENDED) 
+	{
+		int j = device % NR_PRIM_PER_DRIVE; /* 1~4 */
+		int ext_start_sect = hdi->primary[j].base;
+		int s = ext_start_sect;
+		int nr_1st_sub = (j - 1) * NR_SUB_PER_PART; /* 0/16/32/48 */
+
+		for (int i = 0; i < NR_SUB_PER_PART; i++)
+		{
+			int dev_nr = nr_1st_sub + i;/* 0~15/16~31/32~47/48~63 */
+				//printf("extended partition() invoke get_part_table()\n");
+			get_part_table(drive, s, part_tbl);
+
+			hdi->logical[dev_nr].base = s + part_tbl[0].start_sect;
+			hdi->logical[dev_nr].size = part_tbl[0].nr_sects;
+
+			s = ext_start_sect + part_tbl[1].start_sect;
+
+			/* no more logical partitions
+			   in this extended partition */
+			if (part_tbl[1].sys_id == NO_PART)
+			{
+				//printf("partition() extended P over.\n");
+				break;
+			}
+		}
+	}
+	else 
+	{
+		assert(0);
+	}
+}
+
+/*****************************************************************************
+ *                                print_hdinfo
+ *****************************************************************************/
+/**
+ * <Ring 1> Print disk info.
+ * 
+ * @param hdi  Ptr to struct hd_info.
+ *****************************************************************************/
+PRIVATE void print_hdinfo(struct hd_info * hdi)
+{
+	int i;
+	for (i = 0; i < NR_PART_PER_DRIVE + 1; i++)
+	{
+		printl("%sPART_%d: base %d(0x%x), size %d(0x%x) (in sector)\n",
+		       i == 0 ? " " : "     ",
+		       i,
+		       hdi->primary[i].base,
+		       hdi->primary[i].base,
+		       hdi->primary[i].size,
+		       hdi->primary[i].size);
+	}
+	for (i = 0; i < NR_SUB_PER_DRIVE; i++)
+	{
+		if (hdi->logical[i].size == 0)
+			continue;
+		printl("         "
+		       "%d: base %d(0x%x), size %d(0x%x) (in sector)\n",
+		       i,
+		       hdi->logical[i].base,
+		       hdi->logical[i].base,
+		       hdi->logical[i].size,
+		       hdi->logical[i].size);
+	}
 }
 
 /*****************************************************************************
@@ -103,6 +348,12 @@ PRIVATE void hd_identify(int drive)
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 
 	print_identify_info((u16*)hdbuf);
+
+	/* hd_info[0]代表整块硬盘 */
+	u16* hdinfo = (u16*)hdbuf;
+	hd_info[drive].primary[0].base = 0;
+	/* Total Nr of User Addressable Sectors */
+	hd_info[drive].primary[0].size = ((int)hdinfo[61] << 16) + hdinfo[60];
 }
 
 /*****************************************************************************
@@ -192,7 +443,9 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
+		//printf("interrupt_wait()\n");
 	send_recv(RECEIVE, INTERRUPT, &msg);
+		//printf("interrupt_wait() : receiving INT\n");
 }
 
 /*****************************************************************************
@@ -220,25 +473,4 @@ PRIVATE int waitfor(int mask, int val, int timeout)
 	}
 
 	return 0;
-}
-
-/*****************************************************************************
- *                                hd_handler
- *****************************************************************************/
-/**
- * <Ring 0> Interrupt handler.
- * 
- * @param irq  IRQ nr of the disk interrupt.
- *****************************************************************************/
-PUBLIC void hd_handler(int irq)
-{
-	/*
-	 * Interrupts are cleared when the host
-	 *   - reads the Status Register,
-	 *   - issues a reset, or
-	 *   - writes to the Command Register.
-	 */
-	hd_status = in_byte(REG_STATUS);
-
-	inform_int(TASK_HD);
 }

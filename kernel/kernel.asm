@@ -182,18 +182,18 @@ hwint07:                ; Interrupt routine for irq 7 (printer)
 	in	al, INT_S_CTLMASK	; `.
 	or	al, (1 << (%1 - 8))	;  | 屏蔽当前中断
 	out	INT_S_CTLMASK, al	; /
-	mov	al, EOI			; `. 置EOI位(master)
+	mov	al, EOI				; `. 置EOI位(master)
 	out	INT_M_CTL, al		; /
-	nop				; `. 置EOI位(slave)
+	nop						; `. 置EOI位(slave)
 	out	INT_S_CTL, al		; /  一定注意：slave和master都要置EOI
 	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
-	push	%1			; `.
+	push	%1						; `.
 	call	[irq_table + 4 * %1]	;  | 中断处理程序
-	pop	ecx			; /
+	pop	ecx							; /
 	cli
-	in	al, INT_S_CTLMASK	; `.
+	in	al, INT_S_CTLMASK		; `.
 	and	al, ~(1 << (%1 - 8))	;  | 恢复接受当前中断
-	out	INT_S_CTLMASK, al	; /
+	out	INT_S_CTLMASK, al		; /
 	ret
 %endmacro
 ; ==========================================================================================
