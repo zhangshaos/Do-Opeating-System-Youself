@@ -65,5 +65,7 @@ extern  u32     keymap[];           /* this array locates in "keymap.c" for its 
 
 /* fs */
 extern	struct dev_drv_map	dd_map[];
+extern	u8 *			    fsbuf;
+extern	const int		    FSBUF_SIZE;
 
 #endif

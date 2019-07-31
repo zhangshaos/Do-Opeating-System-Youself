@@ -58,11 +58,11 @@
  * |    hd1(1)  |   hd2(2)  |   hd3(3)  |   hd4(4)  |
  * | hd1a(x)|...|hd1p(x+15) | hd2a(x+16)|...|hd2p(x+31)| ......
  */
-#define	MAX_DRIVES			2   /* 主IDE通道,最多支持两块硬盘 */
-#define	NR_PART_PER_DRIVE	4   /* 每个硬盘支持的最多分区数(主分区+扩展分区=4) */
-#define	NR_SUB_PER_PART		16  /* 每个扩展分区最多支持16个逻辑分区 */
-#define	NR_SUB_PER_DRIVE	(NR_SUB_PER_PART * NR_PART_PER_DRIVE)   /* 每块硬盘最多支持的逻辑分区数 */
-#define	NR_PRIM_PER_DRIVE	(NR_PART_PER_DRIVE + 1) /* 每块硬盘的主分区数(包括hd0) */
+#define	MAX_HD_DRIVES			2   /* 主IDE通道,最多支持两块硬盘 */
+#define	NR_PARTS_PER_HD_HRIVE	4   /* 每个硬盘支持的最多分区数(主分区+扩展分区=4) */
+#define	NR_LG_PARTS_PER_EX_PART		16  /* 每个扩展分区最多支持16个逻辑分区 */
+#define	NR_LG_PARTS_PER_HD_DRIVE	(NR_LG_PARTS_PER_EX_PART * NR_PARTS_PER_HD_HRIVE)   /* 每块硬盘最多支持的逻辑分区数 */
+#define	NR_PRIM_PER_HD_DRIVE	(NR_PARTS_PER_HD_HRIVE + 1) /* 每块硬盘的主分区数(包括hd0) */
 
  /**
  * @def MAX_PRIM_DEV
@@ -70,9 +70,9 @@
  * If there are 2 disks, prim_dev ranges in hd[0-9], this macro will
  * equals 9.
  */
-#define	MAX_PRIM    (MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)    /* 主分区的最大次设备号 */
+#define	MAX_PRIM    (MAX_HD_DRIVES * NR_PRIM_PER_HD_DRIVE - 1)    /* 主分区的最大次设备号 */
 
-#define	MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES) /* 主IDE通道上支持的最多逻辑分区数 */
+#define	MAX_SUBPARTITIONS	(NR_LG_PARTS_PER_HD_DRIVE * MAX_HD_DRIVES) /* 主IDE通道上支持的最多逻辑分区数 */
 
 
 
@@ -100,8 +100,8 @@ struct part_info
 struct hd_info
 {
 	int			        open_cnt;
-	struct part_info	primary[NR_PRIM_PER_DRIVE];
-	struct part_info	logical[NR_SUB_PER_DRIVE];
+	struct part_info	primary[NR_PRIM_PER_HD_DRIVE];
+	struct part_info	logical[NR_LG_PARTS_PER_HD_DRIVE];
 };
 
 
