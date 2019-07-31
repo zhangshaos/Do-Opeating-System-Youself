@@ -194,18 +194,18 @@ port_write:
 	mov  ebp, esp
 
 	push edx
-	push edi
+	push esi
 	push ecx
 
 	mov	edx, [ebp + 8]			; port
-	mov	edi, [ebp + 8 + 4]		; buf
+	mov	esi, [ebp + 8 + 4]		; buf
 	mov	ecx, [ebp + 8 + 4 + 4]	; n
 	shr	ecx, 1
 	cld
 	rep	outsw
 
 	pop ecx
-	pop edi
+	pop esi
 	pop edx
 	pop ebp
 	ret
