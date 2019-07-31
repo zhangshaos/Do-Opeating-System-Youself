@@ -22,6 +22,9 @@
 
 PRIVATE void	init_hd();
 PRIVATE void	hd_open(int device);
+PRIVATE void	hd_close(int device);
+PRIVATE void	hd_rdwt(MESSAGE * p);
+PRIVATE void	hd_ioctl(MESSAGE * p);
 PRIVATE void	hd_cmd_out(struct hd_cmd* cmd);
 PRIVATE void	get_part_table(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition(int device, int style);
@@ -36,9 +39,11 @@ PRIVATE void	print_identify_info(u16* hdinfo);
 			 (dev - MINOR_hd1a) / NR_SUB_PER_DRIVE)
 
 
-/* 内部要用的的暂时数据 */
+
 PRIVATE	u8				hd_status;
+/* 读硬盘数据时,用来存储从硬盘读出的数据 */
 PRIVATE	u8				hdbuf[SECTOR_SIZE * 2];
+/* hd_info结构中含有硬盘中主分区和扩展分区的起始扇区和扇区数量 */
 PRIVATE	struct hd_info	hd_info[1];
 
 
@@ -94,6 +99,19 @@ PUBLIC void task_hd()
 		case DEV_OPEN:
 			//printf("task_hd() receive DEV_OPEN msg\n");
 			hd_open(msg.DEVICE);
+			break;
+
+		case DEV_CLOSE:
+			hd_close(msg.DEVICE);
+			break;
+
+		case DEV_READ:
+		case DEV_WRITE:
+			hd_rdwt(&msg);
+			break;
+
+		case DEV_IOCTL:
+			hd_ioctl(&msg);
 			break;
 
 		default:
@@ -164,6 +182,112 @@ PRIVATE void hd_open(int device)
 		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
 		//printf("start to invoke print_hdinfo()\n");
 		print_hdinfo(&hd_info[drive]);
+	}
+}
+
+/*****************************************************************************
+ *                                hd_close
+ *****************************************************************************/
+/**
+ * <Ring 1> This routine handles DEV_CLOSE message. 
+ * 
+ * @param device The device to be opened.
+ *****************************************************************************/
+PRIVATE void hd_close(int device)
+{
+	int drive = DRV_OF_DEV(device);
+	assert(drive == 0);	/* only one drive */
+
+	hd_info[drive].open_cnt--;
+}
+
+
+/*****************************************************************************
+ *                                hd_rdwt
+ *****************************************************************************/
+/**
+ * <Ring 1> This routine handles DEV_READ and DEV_WRITE message.
+ * 
+ * @param p_msg Message ptr.
+ *****************************************************************************/
+PRIVATE void hd_rdwt(MESSAGE * p_msg)
+{
+	int drive = DRV_OF_DEV(p_msg->DEVICE);
+
+	u64 pos = p_msg->POSITION;
+	assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
+
+	/**
+	 * We only allow to R/W from a SECTOR boundary:
+	 */
+	assert((pos & 0x1FF) == 0);
+
+	u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
+	int logidx = (p_msg->DEVICE - MINOR_hd1a) % NR_SUB_PER_DRIVE;
+	sect_nr += p_msg->DEVICE < MAX_PRIM ?
+		hd_info[drive].primary[p_msg->DEVICE].base :
+		hd_info[drive].logical[logidx].base;
+
+	struct hd_cmd cmd;
+	cmd.features	= 0;
+	cmd.count	= (p_msg->CNT + SECTOR_SIZE - 1) / SECTOR_SIZE;
+	cmd.lba_low	= sect_nr & 0xFF;
+	cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
+	cmd.lba_high	= (sect_nr >> 16) & 0xFF;
+	cmd.device	= MAKE_DEVICE_REG(1, drive, (sect_nr >> 24) & 0xF);
+	cmd.command	= (p_msg->type == DEV_READ) ? ATA_READ : ATA_WRITE;
+	hd_cmd_out(&cmd);
+
+	int bytes_left = p_msg->CNT;
+	void * la = (void*)va2la(p_msg->PROC_NR, p_msg->BUF);
+
+	while (bytes_left) {
+		int bytes = min(SECTOR_SIZE, bytes_left);
+		if (p_msg->type == DEV_READ) {
+			interrupt_wait();
+			port_read(REG_DATA, hdbuf, SECTOR_SIZE);
+			phys_copy(la, (void*)va2la(TASK_HD, hdbuf), bytes);
+		}
+		else {
+			if (!waitfor(STATUS_DRQ, STATUS_DRQ, HD_TIMEOUT))
+				panic("hd writing error.");
+
+			port_write(REG_DATA, la, bytes);
+			interrupt_wait();
+		}
+		bytes_left -= SECTOR_SIZE;
+		la += SECTOR_SIZE;
+	}
+}															
+
+
+/*****************************************************************************
+ *                                hd_ioctl
+ *****************************************************************************/
+/**
+ * <Ring 1> This routine handles the DEV_IOCTL message.
+ * 
+ * @param p_msg  Ptr to the MESSAGE.
+ *****************************************************************************/
+PRIVATE void hd_ioctl(MESSAGE * p_msg)
+{
+	int device = p_msg->DEVICE;
+	int drive = DRV_OF_DEV(device);
+
+	struct hd_info * hdi = &hd_info[drive];
+
+	if (p_msg->REQUEST == DIOCTL_GET_GEO) {
+		void * dst = va2la(p_msg->PROC_NR, p_msg->BUF);
+		void * src = va2la(TASK_HD,
+				   device < MAX_PRIM ?
+				   &hdi->primary[device] :
+				   &hdi->logical[(device - MINOR_hd1a) %
+						NR_SUB_PER_DRIVE]);
+
+		phys_copy(dst, src, sizeof(struct part_info));
+	}
+	else {
+		assert(0);
 	}
 }
 

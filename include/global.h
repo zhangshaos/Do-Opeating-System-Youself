@@ -41,4 +41,6 @@ extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and priva
 extern  CONSOLE     console_table[];/* display characters on screen */
 
 /* FS */
+extern	u8 *			    fsbuf;
+extern	const int		    FSBUF_SIZE;
 extern	struct dev_drv_map	dd_map[];

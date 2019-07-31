@@ -158,6 +158,41 @@ struct inode {
  */
 #define	INODE_SIZE	32
 
+
+
+
+
+/**
+ * @def   MAX_FILENAME_LEN
+ * @brief Max len of a filename
+ * @see   dir_entry
+ */
+#define	MAX_FILENAME_LEN	12
+
+
+
+
+
+/**
+ * @struct dir_entry
+ * @brief  Directory Entry
+ */
+struct dir_entry {
+	int	inode_nr;		/**< inode nr. */
+	char	name[MAX_FILENAME_LEN];	/**< Filename */
+};
+
+/**
+ * @def   DIR_ENTRY_SIZE
+ * @brief The size of directory entry in the device.
+ *
+ * It is as same as the size in memory.
+ */
+#define	DIR_ENTRY_SIZE	sizeof(struct dir_entry)
+
+
+
+
 /**
  * @struct file_desc
  * @brief  File Descriptor

@@ -267,7 +267,7 @@ struct hd_cmd {
 
 /* 硬盘分区信息中的分区起始扇区sector和分区所占扇区个数 */
 struct part_info {
-	u32	base;	/* # of start sector (NOT byte offset, but SECTOR) */
+	u32	base;	/* # start sector (NOT byte offset, but SECTOR) */
 	u32	size;	/* how many sectors in this partition (NOT byte size, but SECTOR number) */
 };
 
