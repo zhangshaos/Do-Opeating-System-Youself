@@ -6,6 +6,7 @@
 #include "const.h"
 #include "struct_proc.h"
 #include "func_proto.h"
+#include "global.h"
 
 
 
@@ -23,7 +24,11 @@ PUBLIC void task_fs()
  	/* open the device: hard disk */
 	MESSAGE driver_msg;
 	driver_msg.type = DEV_OPEN;
-	send_recv(BOTH, TASK_HD, &driver_msg);
+	driver_msg.DEVICE = MINOR(ROOT_DEV);
+
+ 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+
+ 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
  	spin("TASK_FS");
 }

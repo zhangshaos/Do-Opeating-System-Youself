@@ -87,13 +87,16 @@
 
 
 
+/* 硬盘分区信息中的分区起始扇区sector和分区所占扇区个数 */
 struct part_info
 {
 	u32	base;	/* # of start sector (NOT byte offset, but SECTOR) */
 	u32	size;	/* how many sectors in this partition (NOT byte size, but SECTOR number) */
 };
 
- /* main drive struct, one entry per drive */
+/* main drive struct, one entry per drive
+ * 某个硬盘中所有分区(主分区和扩展分区(其中的逻辑分区))的分区信息
+ *  */
 struct hd_info
 {
 	int			        open_cnt;

@@ -83,13 +83,19 @@ typedef struct Proc {
 	u32 pid;		/* process id passed in from MM */
 	char name[16];	/* name of the process */
 
-	int  p_flags;	/* process flags. A proc is runnable iff p_flags==0*/
+	/* p_status.(ready, sending, receiving) */
+	int  p_status;	/* process flags. A proc is runnable iff p_status==0*/
 
-	/* IPC相关 */
-	MESSAGE *p_msg;
+	/**
+	 * 本进程持有的消息.
+	 * SENDING状态:	表示此进程正在发送的消息(还没有目标进程接受,所以此进程阻塞)
+	 * RECEIVING状态:表示此进程想要接受的消息(还没有进程发送,所以此进程阻塞)
+	 * REARY状态:	p_hold_msg = 0,因为此进程没有消息要处理 
+	 */
+	MESSAGE * p_hold_msg;
 
-	int p_recvfrom;		/* 'p' means index of proc_table[] */
-	int p_sendto;
+	int p_want_recvfrom;		/* 'p' means index of proc_table[] */
+	int p_want_sendto;
 
  	int has_int_msg;	/**
 	 					 * 表示该进程在等待一个硬件中断消息

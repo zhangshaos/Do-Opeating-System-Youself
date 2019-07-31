@@ -181,10 +181,10 @@ PUBLIC int kernel_main()
 		p_proc->nr_tty 		= 0;		/* 所有进程默认使用tty0 */
 
 		/* 填充IPC相关 */
- 		p_proc->p_flags 	= 0;	/* ready */
-		p_proc->p_msg 		= 0;
-		p_proc->p_recvfrom 	= NO_TASK;
-		p_proc->p_sendto 	= NO_TASK;
+ 		p_proc->p_status 	= 0;	/* ready */
+		p_proc->p_hold_msg 		= 0;
+		p_proc->p_want_recvfrom 	= NO_TASK;
+		p_proc->p_want_sendto 	= NO_TASK;
 		p_proc->has_int_msg = 0;
 		p_proc->q_sending 	= 0;
 		p_proc->next_sending = 0;

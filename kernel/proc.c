@@ -26,7 +26,7 @@ PUBLIC void schedule()
 		for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
 		{
 			/* 只选择"ready"的进程 */
-			if(0 == p->p_flags)
+			if(0 == p->p_status)
 			{
 				if (p->ticks > greatest_ticks)
 				{
@@ -41,7 +41,7 @@ PUBLIC void schedule()
 		{
 			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
 			{
-				if(0 == p->p_flags)
+				if(0 == p->p_status)
 				{
 					p->ticks = p->priority;
 				}

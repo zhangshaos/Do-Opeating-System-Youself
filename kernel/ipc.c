@@ -152,37 +152,52 @@ PRIVATE int msg_send(PROCESS* current, int dest, MESSAGE* m)
 		panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
 	}
 
- 	if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
-	    (p_dest->p_recvfrom == proc2pid(sender) ||
-	     p_dest->p_recvfrom == ANY)) 
+ 	if ((p_dest->p_status & RECEIVING) && /* dest is waiting for the msg */
+	    (p_dest->p_want_recvfrom == proc2pid(sender) ||
+	     p_dest->p_want_recvfrom == ANY)) 
     {
-		assert(p_dest->p_msg);
+		assert(p_dest->p_hold_msg);
 		assert(m);
 
-        /* convey the message */
- 		memcpy(va2la(dest, p_dest->p_msg),
+        /**
+		 * 将this(sender)的消息写入p_dest
+		 * 保持(hold)的receiving消息
+		 */
+ 		memcpy(va2la(dest, p_dest->p_hold_msg),
 			  va2la(proc2pid(sender), m),
 			  sizeof(MESSAGE));
-		p_dest->p_msg = 0;
-		p_dest->p_flags &= ~RECEIVING; /* dest has received the msg */
-		p_dest->p_recvfrom = NO_TASK;
+		p_dest->p_hold_msg = 0;
+		p_dest->p_status &= ~RECEIVING; /* dest has received the msg */
+		p_dest->p_want_recvfrom = NO_TASK;
 		unblock(p_dest); /* you have to set p_falgs before invoking unlock() */
 
- 		assert(p_dest->p_flags == 0);
-		assert(p_dest->p_msg == 0);
-		assert(p_dest->p_recvfrom == NO_TASK);
-		assert(p_dest->p_sendto == NO_TASK);    /* why ? A:初始化时设定*/
+		/**@ assert()
+		 * @sender:
+		 * p_dest->p_status, p_hold_msg = 0
+		 * 		 ->p_want_recvfrom = NO_TASK (Because you are ready for send not for receive)
+		 * 		 ->p_want_sendto = NO_TASK (Because you have sent just now...)
+		 * 
+		 * @p_dest:
+		 * p_dest->p_status = 0 (Because you have unlocked it)
+		 * 		 ->p_hold_msg = 0 (Because you have give it the receiving msg that it should hold)
+		 * 		 ->p_want_recvfrom = NO_TASK (Because you have sent just now...)
+		 * 		 ->p_want_sendto = NO_TASK (Because it had been receiving status(it's impossible for sending) before you sent just now.)
+		 */
+		assert(p_dest->p_status == 0);
+		assert(p_dest->p_hold_msg == 0);
+		assert(p_dest->p_want_recvfrom == NO_TASK);
+		assert(p_dest->p_want_sendto == NO_TASK);    /* why ? A:初始化时设定*/
         /* why ? */
         /**
          * sender在准备发送msg时,
-         * p_flags = 0, 因为此时正在running;
-         * p_msg = 0, 因为此时还不是sending状态,还没有挂载msg(只是将msg准备好发送)
-         * p_recvform 和 p_sendto = NO_TASK, 因为初始化时候设定
+         * p_status = 0, 因为此时正在running;
+         * p_hold_msg = 0, 因为此时还不是sending状态,还没有挂载msg(只是将msg准备好发送)
+         * p_recvform 和 p_want_sendto = NO_TASK, 因为初始化时候设定
          */
-		assert(sender->p_flags == 0);
-		assert(sender->p_msg == 0);
-		assert(sender->p_recvfrom == NO_TASK);
-		assert(sender->p_sendto == NO_TASK);
+		assert(sender->p_status == 0);
+		assert(sender->p_hold_msg == 0);
+		assert(sender->p_want_recvfrom == NO_TASK);
+		assert(sender->p_want_sendto == NO_TASK);
 	}
 	else 
     {   /**
@@ -190,10 +205,10 @@ PRIVATE int msg_send(PROCESS* current, int dest, MESSAGE* m)
          * make caller blocked and sending, which 
          * is prepared for receiver.
          */
-		sender->p_flags |= SENDING;
-		assert(sender->p_flags == SENDING); /* 这个是真的多余... */
-		sender->p_sendto = dest;
-		sender->p_msg = m;
+		sender->p_status |= SENDING;
+		assert(sender->p_status == SENDING); /* 这个是真的多余... */
+		sender->p_want_sendto = dest;
+		sender->p_hold_msg = m;
 
  		/* append to the sending queue */
 		PROCESS * p;
@@ -211,14 +226,14 @@ PRIVATE int msg_send(PROCESS* current, int dest, MESSAGE* m)
 		}
 		sender->next_sending = 0;
 
-        /* After modifying p_flags, block this process. */
+        /* After modifying p_status, block this process. */
  		block(sender);
 
         /* unnecessary... */
- 		assert(sender->p_flags == SENDING);
-		assert(sender->p_msg != 0);
-		assert(sender->p_recvfrom == NO_TASK);
-		assert(sender->p_sendto == dest);
+ 		assert(sender->p_status == SENDING);
+		assert(sender->p_hold_msg != 0);
+		assert(sender->p_want_recvfrom == NO_TASK);
+		assert(sender->p_want_sendto == dest);
 	}
 
  	return 0;
@@ -256,20 +271,32 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
  	if ((receiver->has_int_msg) &&
 	    ((src == ANY) || (src == INTERRUPT)))
     {
-        /* craete a INT msg, and copy it to this receiver */
+        /* There is an interrupt needs receiver's handling and
+		 * receiver is ready to handle it.
+		 */
+
+		/** 如果this有一个中断来了,
+		 * 立即创建一个INTERRUPT的msg,
+		 * 并将该消息直接发送给this(receiver)
+		 */
  		MESSAGE msg;
 		reset_msg(&msg);
 		msg.source = INTERRUPT;
 		msg.type = HARD_INT;
 		assert(m);
+		/**
+		 * 将此消息直接传递给this(receiver)->准备好的msg
+		 * Q: 为什么不传递给p_hold_msg?
+		 * A: 因为此时this还没有阻塞在RECEIVING状态,并没有hold任何消息.
+		 */
 		memcpy(va2la(proc2pid(receiver), m), &msg,
 			  sizeof(MESSAGE));
 
  		receiver->has_int_msg = 0;
 
- 		assert(receiver->p_flags == 0);
-		assert(receiver->p_msg == 0);
-		assert(receiver->p_sendto == NO_TASK);
+ 		assert(receiver->p_status == 0);
+		assert(receiver->p_hold_msg == 0);
+		assert(receiver->p_want_sendto == NO_TASK);
 		assert(receiver->has_int_msg == 0);
 
         /* 硬件消息,立即返回 */
@@ -291,17 +318,18 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 		if (receiver->q_sending) 
         {
 			p_from = receiver->q_sending;
+			/* ready for p_from->hold_msg -> m */
 			recv_ok = 1;
 
- 			assert(receiver->p_flags == 0);
-			assert(receiver->p_msg == 0);
-			assert(receiver->p_recvfrom == NO_TASK);
-			assert(receiver->p_sendto == NO_TASK);
+ 			assert(receiver->p_status == 0);
+			assert(receiver->p_hold_msg == 0);
+			assert(receiver->p_want_recvfrom == NO_TASK);
+			assert(receiver->p_want_sendto == NO_TASK);
 			assert(receiver->q_sending != 0);
-			assert(p_from->p_flags == SENDING);
-			assert(p_from->p_msg != 0);
-			assert(p_from->p_recvfrom == NO_TASK);
-			assert(p_from->p_sendto == proc2pid(receiver));
+			assert(p_from->p_status == SENDING);
+			assert(p_from->p_hold_msg != 0);
+			assert(p_from->p_want_recvfrom == NO_TASK);
+			assert(p_from->p_want_sendto == proc2pid(receiver));
 		}
 	}
 	else if(src >= 0 && src < NR_TASKS+NR_PROCS)
@@ -311,12 +339,13 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 		 */
 		p_from = &proc_table[src];
 
- 		if ((p_from->p_flags & SENDING) &&
-		    (p_from->p_sendto == proc2pid(receiver))) 
+ 		if ((p_from->p_status & SENDING) &&
+		    (p_from->p_want_sendto == proc2pid(receiver))) 
         {
 			/* Perfect, src is sending a message to
 			 * receiver.
 			 */
+			/* ready for p_from->hold_msg -> m */
 			recv_ok = 1;
 
  			PROCESS* p = receiver->q_sending;
@@ -327,7 +356,7 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
             /* 在receiver的q_sender队列中寻找指定的消息 */
 			while (p)
             {
-				assert(p_from->p_flags & SENDING);
+				assert(p_from->p_status & SENDING);
 				if (proc2pid(p) == src)
                 { /* if p is the one */
 					p_from = p;
@@ -337,17 +366,23 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 				p = p->next_sending;
 			}
 
- 			assert(receiver->p_flags == 0);
-			assert(receiver->p_msg == 0);
-			assert(receiver->p_recvfrom == NO_TASK);
-			assert(receiver->p_sendto == NO_TASK);
+ 			assert(receiver->p_status == 0);
+			assert(receiver->p_hold_msg == 0);
+			assert(receiver->p_want_recvfrom == NO_TASK);
+			assert(receiver->p_want_sendto == NO_TASK);
 			assert(receiver->q_sending != 0);
-			assert(p_from->p_flags == SENDING);
-			assert(p_from->p_msg != 0);
-			assert(p_from->p_recvfrom == NO_TASK);
-			assert(p_from->p_sendto == proc2pid(receiver));
+			assert(p_from->p_status == SENDING);
+			assert(p_from->p_hold_msg != 0);
+			assert(p_from->p_want_recvfrom == NO_TASK);
+			assert(p_from->p_want_sendto == proc2pid(receiver));
 		}
 	}
+	/**
+	 * @Note:
+	 * 这里我没有处理其他src,
+	 * 例如当src = INTERRUPT时,
+	 * copyok = 0,我直接让下面的代码顺便处理了, 这样做可能会有问题, 你可以此处补充些许代码手动处理下.
+	 */
 
  	if (recv_ok) 
     {
@@ -368,38 +403,55 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 		}
 
  		assert(m);
-		assert(p_from->p_msg);
+		assert(p_from->p_hold_msg);
 		/* copy the message */
 		memcpy(va2la(proc2pid(receiver), m),
-			  va2la(proc2pid(p_from), p_from->p_msg),
+			  va2la(proc2pid(p_from), p_from->p_hold_msg),
 			  sizeof(MESSAGE));
 
- 		p_from->p_msg = 0;
-		p_from->p_sendto = NO_TASK;
-		p_from->p_flags &= ~SENDING;
+ 		p_from->p_hold_msg = 0;
+		p_from->p_want_sendto = NO_TASK;
+		p_from->p_status &= ~SENDING;
 		unblock(p_from);
 	}
-	else
-    {   /* nobody's sending any msg */
-		/* Set p_flags so that receiver will not
-		 * be scheduled until it is unblocked.
+	else 
+	{
+		/**
+		 * nobody's sending any msg.
+		 * so, make this process in RECEIVING status 
+		 * and lock it.
 		 */
-		receiver->p_flags |= RECEIVING;
+		receiver->p_status |= RECEIVING;
 
- 		receiver->p_msg = m;
+ 		receiver->p_hold_msg = m;
 
- 		if (src == ANY)
-			receiver->p_recvfrom = ANY;
-		else
-			receiver->p_recvfrom = proc2pid(p_from);
+		receiver->p_want_recvfrom = src;
 
  		block(receiver);
 
- 		assert(receiver->p_flags == RECEIVING);
-		assert(receiver->p_msg != 0);
-		assert(receiver->p_recvfrom != NO_TASK);
-		assert(receiver->p_sendto == NO_TASK);
-		assert(receiver->has_int_msg == 0);
+		assert(receiver->p_status == RECEIVING);
+		assert(receiver->p_hold_msg != 0);
+		assert(receiver->p_want_recvfrom != NO_TASK);
+		assert(receiver->p_want_sendto == NO_TASK);
+		//printf("receiver:%d, msg_from:%d\n",current-proc_table,src);
+		/**@ Amazing!
+		 * when cotrol flow run in pritf(), a HD interrupt happen
+		 * and set has_int_msg = 1 !
+		 * But, if control flow come to HD INT handler and invoke inform_int(),
+		 * why inform_int won't giver msg to hd_task() and set has_int_msg = 0 directly?
+		 * A : I got it!
+		 * Because p_dest->p_recvform == TASK_SYS...
+		 * 
+		 * 
+		 * @ Further thought
+		 * If a process don't wait for a INT but another INT,
+		 * the former can give its msg to the process compulsorily ?
+		 * Obviously not ! 
+		 * 
+		 * @ Final,
+		 * So I think this assert isn't necessary !
+		 */
+		//assert(receiver->has_int_msg == 0);
 	}
 
  	return 0;
@@ -419,24 +471,29 @@ PUBLIC void inform_int(int task_nr)
 {
 	PROCESS *p = proc_table + task_nr;
 
- 	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
-	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) 
+ 	if ((p->p_status & RECEIVING) && /* dest is waiting for the msg */
+	    ((p->p_want_recvfrom == INTERRUPT) || (p->p_want_recvfrom == ANY))) 
 	{
-		p->p_msg->source 	= INTERRUPT;
-		p->p_msg->type 		= HARD_INT;
-		p->p_msg 			= 0;
-		p->has_int_msg 		= 0;
-		p->p_flags 			&= ~RECEIVING; /* dest has received the msg */
-		p->p_recvfrom 		= NO_TASK;
+		p->p_hold_msg->source 	= INTERRUPT;
+		p->p_hold_msg->type 	= HARD_INT;
+		/**Q: p_hold_msg为什么要清零?
+ 		 * A: 因为p_dest已经"收到了"想要的msg, 接下来unlock(p_dest),
+		 * 	  p_dest就会正式接收处理这个msg.
+		 * 	  所以, p_dest不在处于RECEIVING状态而保持(hold)msg了.
+		 */
+		p->p_hold_msg 			= 0;
+		p->has_int_msg 			= 0;
+		p->p_status 			&= ~RECEIVING; /* dest has received the msg */
+		p->p_want_recvfrom 		= NO_TASK;
 
- 		assert(p->p_flags == 0);
+ 		assert(p->p_status == 0);
 
  		unblock(p);
 
- 		assert(p->p_flags == 0);
-		assert(p->p_msg == 0);
-		assert(p->p_recvfrom == NO_TASK);
-		assert(p->p_sendto == NO_TASK);
+ 		assert(p->p_status == 0);
+		assert(p->p_hold_msg == 0);
+		assert(p->p_want_recvfrom == NO_TASK);
+		assert(p->p_want_sendto == NO_TASK);
 	}
 	else
 	{
@@ -448,30 +505,30 @@ PUBLIC void inform_int(int task_nr)
 
 
 /** =========================== block ============================
- * <Ring 0> This routine is called after `p_flags' has been set (!= 0), it
+ * <Ring 0> This routine is called after `p_status' has been set (!= 0), it
  * calls `schedule()' to choose another proc as the `proc_ready'.
  * When Ring adjusts from 0 -> 1-3, the restart() will switch eip to "ready process". 
  *
- * @attention This routine does not change `p_flags'. Make sure the `p_flags'
+ * @attention This routine does not change `p_status'. Make sure the `p_status'
  * of the proc to be blocked has been set properly.
  * 
  * @param p The proc to be blocked.
  */
 PRIVATE void block(PROCESS* p)
 {
-	assert(p->p_flags);
+	assert(p->p_status);
 	schedule();
 }
 
 /** ======================== unblock ========================
  * <Ring 0> This is a dummy routine. It does nothing actually. When it is
- * called, the `p_flags' should have been cleared (== 0).
+ * called, the `p_status' should have been cleared (== 0).
  * 
  * @param p The unblocked proc.
  */
 PRIVATE void unblock(PROCESS* p)
 {
-    assert(p->p_flags == 0);
+    assert(p->p_status == 0);
 }
 
 /** =========================== deadlock ==============================
@@ -491,23 +548,23 @@ PRIVATE int deadlock(int src, int dest)
 	PROCESS* p = proc_table + dest;
 	while (1) 
     {
-		if (p->p_flags & SENDING) 
+		if (p->p_status & SENDING) 
         {
-			if (p->p_sendto == src) 
+			if (p->p_want_sendto == src) 
             {
 				/* print the chain */
 				p = proc_table + dest;
 				printf("=_=%s", p->name);
 				do {
-					assert(p->p_msg);
-					p = proc_table + p->p_sendto;
+					assert(p->p_hold_msg);
+					p = proc_table + p->p_want_sendto;
 					printf("->%s", p->name);
 				} while (p != proc_table + src);
 				printf("=_=");
 
  				return 1;
 			}
-			p = proc_table + p->p_sendto;
+			p = proc_table + p->p_want_sendto;
 		}
 		else 
         {
@@ -556,9 +613,9 @@ PUBLIC void dump_proc(PROCESS* p)
 	sprintf(info, "pid: 0x%x.  ", p->pid); disp_color_str(info, text_color);
 	sprintf(info, "name: %s.  ", p->name); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
-	sprintf(info, "p_flags: 0x%x.  ", p->p_flags); disp_color_str(info, text_color);
-	sprintf(info, "p_recvfrom: 0x%x.  ", p->p_recvfrom); disp_color_str(info, text_color);
-	sprintf(info, "p_sendto: 0x%x.  ", p->p_sendto); disp_color_str(info, text_color);
+	sprintf(info, "p_status: 0x%x.  ", p->p_status); disp_color_str(info, text_color);
+	sprintf(info, "p_want_recvfrom: 0x%x.  ", p->p_want_recvfrom); disp_color_str(info, text_color);
+	sprintf(info, "p_want_sendto: 0x%x.  ", p->p_want_sendto); disp_color_str(info, text_color);
 	sprintf(info, "nr_tty: 0x%x.  ", p->nr_tty); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	sprintf(info, "has_int_msg: 0x%x.  ", p->has_int_msg); disp_color_str(info, text_color);
