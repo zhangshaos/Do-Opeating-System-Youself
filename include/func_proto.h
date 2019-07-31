@@ -30,6 +30,10 @@ PUBLIC void milli_delay(int milli_sec);
 PUBLIC int  sys_get_ticks();
 PUBLIC void init_clock();
 
+/* kernel/hd.c */
+PUBLIC void	task_hd();
+PUBLIC void	hd_handler(int irq);
+
 
 /* keyboard.c */
 PUBLIC void init_keyboard();
@@ -42,6 +46,9 @@ PUBLIC void respond_key(TTY* p_tty, u32 key);
 
 /* systask.c */
 PUBLIC void     task_sys();
+
+/* fs.c */
+PUBLIC void task_fs();
 
 /* console.c */
 PUBLIC void out_char(CONSOLE* p_con, char ch);
@@ -117,7 +124,7 @@ PUBLIC	void	dump_msg(const char * title, MESSAGE* m);
 PUBLIC	void	dump_proc(PROCESS* p);
 PUBLIC	int	    send_recv(int function, int src_dest, MESSAGE* msg);
 PUBLIC	int	    sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p);
-
+PUBLIC 	void	inform_int(int task_nr);
 
 
 /* syscall.asm */
@@ -150,6 +157,9 @@ PUBLIC void disable_irq(int irq);
 PUBLIC void enable_irq(int irq);
 PUBLIC void disable_int();  /* open or close Interupt. */
 PUBLIC void enable_int();
+PUBLIC void	port_read(u16 port, void* buf, int n);
+PUBLIC void	port_write(u16 port, void* buf, int n);
+PUBLIC void	glitter(int row, int col);  /* =======> 这是什么函数? */
 
 /* lib/misc.c */
 PUBLIC void     spin(char * func_name);
@@ -158,10 +168,10 @@ PUBLIC void     spin(char * func_name);
 
 
 /* mm.c */
-/**
+/*************************************************************
  * emmm, inline func must be here...
  * otherwise......
- */
+ *************************************************************/
 static  inline  u32     seg2phys(u16 seg)
 {
 	DESCRIPTOR* p_dest = &gdt[seg >> 3];
@@ -189,3 +199,9 @@ static  inline  void*   va2la(int pid, void* va)
 
  	return (void*)la;
 };
+
+
+
+/* max() & min() */
+#define	max(a,b)	((a) > (b) ? (a) : (b))
+#define	min(a,b)	((a) < (b) ? (a) : (b))

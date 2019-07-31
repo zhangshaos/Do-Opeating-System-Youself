@@ -13,7 +13,8 @@ GCC_FLAGS		=	-I include/ -c -m32 -fno-stack-protector -fno-builtin
 # -m 		: 	模拟环境
 # -Ttext 	:	相当与org汇编指令
 # -s 		:	清除符号信息
-LD_FLAGS		=	-m elf_i386 -Ttext $(ENTRYPOINT)
+# -Map 		: 	....
+LD_FLAGS		=	-s -m elf_i386 -Ttext $(ENTRYPOINT) -Map ld.map
 
 
 # 编译后文件
@@ -24,7 +25,9 @@ OBJS	= 	kernel/kernel.o\
 			kernel/clock.o\
 			kernel/console.o\
 			kernel/exception_handler.o\
+			kernel/fs.o\
 			kernel/global.o\
+			kernel/hd.o\
 			kernel/init_idt.o\
 			kernel/interrupt.o\
 			kernel/ipc.o\
@@ -87,7 +90,13 @@ kernel/console.o:	kernel/console.c include/const.h include/type.h include/struct
 kernel/exception_handler.o:	kernel/exception_handler.c include/const.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
+kernel/fs.o:	kernel/fs.c #还有其他的头文件暂时不管了...
+		gcc $< $(GCC_FLAGS) -o $@
+
 kernel/global.o:	kernel/global.c include/const.h include/type.h include/struct_descript.h include/struct_proc.h include/const_interrupt.h include/func_proto.h 
+		gcc $< $(GCC_FLAGS) -o $@
+
+kernel/hd.o:	kernel/hd.c #还有其他的头文件暂时不管了...
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/init_idt.o:	kernel/init_idt.c include/const.h include/const_interrupt.h include/global.h include/type.h include/func_proto.h 

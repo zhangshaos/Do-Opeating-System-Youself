@@ -13,6 +13,7 @@ Date:		 	2019-7-15
 #include"const_interrupt.h"
 #include"func_proto.h"
 #include"struct_tty.h"
+#include "struct_hd.h"
 
 
 
@@ -56,7 +57,9 @@ PUBLIC	PROCESS		proc_table[NR_TASKS + NR_PROCS];
 /* descriptions for all Tasks & User-Process */
 PUBLIC	TASK		task_table[NR_TASKS] = {
 	{task_tty, STACK_SIZE_TTY, "TTY"},
-	{task_sys, STACK_SIZE_SYS, "SYS"}
+	{task_sys, STACK_SIZE_SYS, "SYS"},
+	{task_hd,  STACK_SIZE_HD,  "HD" },
+	{task_fs,  STACK_SIZE_FS,  "FS" }
 	};
 
 PUBLIC  TASK    user_proc_table[NR_PROCS] = {
@@ -84,3 +87,19 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
 	sys_sendrec
 	};
 
+
+struct dev_drv_map dd_map[] = {
+	{INVALID_DRIVER},	/**< 0 : Unused */
+	{INVALID_DRIVER},	/**< 1 : Reserved for floppy driver */
+	{INVALID_DRIVER},	/**< 2 : Reserved for cdrom driver */
+	{TASK_HD},			/**< 3 : Hard disk */
+	{TASK_TTY},			/**< 4 : TTY */
+	{INVALID_DRIVER}	/**< 5 : Reserved for scsi disk driver */
+};
+
+
+ /**
+ * 6MB~7MB: buffer for FS
+ */
+PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
+PUBLIC	const int	FSBUF_SIZE	= 0x100000;

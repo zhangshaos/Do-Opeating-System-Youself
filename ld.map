@@ -1,0 +1,748 @@
+
+分配公共符号
+公共符号            大小              文件
+
+idt_ptr             0x6               kernel/global.o
+task_stack          0x38000           kernel/global.o
+k_reenter           0x4               kernel/global.o
+gdt                 0x400             kernel/global.o
+tty_table           0x330             kernel/global.o
+tss                 0x68              kernel/global.o
+nr_current_console  0x4               kernel/global.o
+disp_pos            0x4               kernel/global.o
+gdt_ptr             0x6               kernel/global.o
+idt                 0x800             kernel/global.o
+PARTITION_ENTRY     0x10              kernel/clock.o
+ticks               0x4               kernel/global.o
+console_table       0x30              kernel/global.o
+irq_table           0x40              kernel/global.o
+p_proc_ready        0x4               kernel/global.o
+proc_table          0x428             kernel/global.o
+
+舍弃的输入节
+
+ .group         0x0000000000000000        0x8 kernel/clock.o
+ .group         0x0000000000000000        0x8 kernel/clock.o
+ .group         0x0000000000000000        0x8 kernel/clock.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/clock.o
+ .group         0x0000000000000000        0x8 kernel/console.o
+ .group         0x0000000000000000        0x8 kernel/console.o
+ .group         0x0000000000000000        0x8 kernel/console.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/console.o
+ .text.__x86.get_pc_thunk.cx
+                0x0000000000000000        0x4 kernel/console.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/console.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/console.o
+ .group         0x0000000000000000        0x8 kernel/exception_handler.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/exception_handler.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/exception_handler.o
+ .group         0x0000000000000000        0x8 kernel/fs.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/fs.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/fs.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/global.o
+ .group         0x0000000000000000        0x8 kernel/hd.o
+ .group         0x0000000000000000        0x8 kernel/hd.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/hd.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/hd.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/hd.o
+ .group         0x0000000000000000        0x8 kernel/init_idt.o
+ .group         0x0000000000000000        0x8 kernel/init_idt.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/init_idt.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/init_idt.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/init_idt.o
+ .group         0x0000000000000000        0x8 kernel/ipc.o
+ .group         0x0000000000000000        0x8 kernel/ipc.o
+ .group         0x0000000000000000        0x8 kernel/ipc.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/ipc.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/ipc.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/ipc.o
+ .group         0x0000000000000000        0x8 kernel/keyboard.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/keyboard.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/keyboard.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/keymap.o
+ .group         0x0000000000000000        0x8 kernel/main.o
+ .group         0x0000000000000000        0x8 kernel/main.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/main.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/main.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/main.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/mm.o
+ .group         0x0000000000000000        0x8 kernel/proc.o
+ .group         0x0000000000000000        0x8 kernel/proc.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/proc.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/proc.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/proc.o
+ .group         0x0000000000000000        0x8 kernel/syscallc.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/syscallc.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/syscallc.o
+ .group         0x0000000000000000        0x8 kernel/systask.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/systask.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/systask.o
+ .group         0x0000000000000000        0x8 kernel/tty.o
+ .group         0x0000000000000000        0x8 kernel/tty.o
+ .group         0x0000000000000000        0x8 kernel/tty.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 kernel/tty.o
+ .text.__x86.get_pc_thunk.cx
+                0x0000000000000000        0x4 kernel/tty.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 kernel/tty.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 kernel/tty.o
+ .group         0x0000000000000000        0x8 lib/klib.o
+ .group         0x0000000000000000        0x8 lib/klib.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 lib/klib.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 lib/klib.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/klib.o
+ .group         0x0000000000000000        0x8 lib/misc.o
+ .group         0x0000000000000000        0x8 lib/misc.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 lib/misc.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 lib/misc.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/misc.o
+ .group         0x0000000000000000        0x8 lib/printf.o
+ .group         0x0000000000000000        0x8 lib/printf.o
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000000000        0x4 lib/printf.o
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000000000        0x4 lib/printf.o
+ .note.GNU-stack
+                0x0000000000000000        0x0 lib/printf.o
+
+内存配置
+
+名称           来源             长度             属性
+*default*        0x0000000000000000 0xffffffffffffffff
+
+链结器命令稿和内存映射
+
+LOAD kernel/kernel.o
+LOAD kernel/clock.o
+LOAD kernel/console.o
+LOAD kernel/exception_handler.o
+LOAD kernel/fs.o
+LOAD kernel/global.o
+LOAD kernel/hd.o
+LOAD kernel/init_idt.o
+LOAD kernel/interrupt.o
+LOAD kernel/ipc.o
+LOAD kernel/keyboard.o
+LOAD kernel/keymap.o
+LOAD kernel/main.o
+LOAD kernel/mm.o
+LOAD kernel/proc.o
+LOAD kernel/syscall.o
+LOAD kernel/syscallc.o
+LOAD kernel/systask.o
+LOAD kernel/tty.o
+LOAD lib/klib.o
+LOAD lib/kliba.o
+LOAD lib/memory.o
+LOAD lib/misc.o
+LOAD lib/printf.o
+段 .text 的地址设置为 0x30400
+                [!provide]                        PROVIDE (__executable_start = SEGMENT_START ("text-segment", 0x8048000))
+                0x0000000008048094                . = (SEGMENT_START ("text-segment", 0x8048000) + SIZEOF_HEADERS)
+
+.interp
+ *(.interp)
+
+.note.gnu.build-id
+ *(.note.gnu.build-id)
+
+.hash
+ *(.hash)
+
+.gnu.hash
+ *(.gnu.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.dyn        0x0000000008048094        0x0
+ *(.rel.init)
+ *(.rel.text .rel.text.* .rel.gnu.linkonce.t.*)
+ .rel.text      0x0000000008048094        0x0 kernel/kernel.o
+ *(.rel.fini)
+ *(.rel.rodata .rel.rodata.* .rel.gnu.linkonce.r.*)
+ *(.rel.data.rel.ro .rel.data.rel.ro.* .rel.gnu.linkonce.d.rel.ro.*)
+ *(.rel.data .rel.data.* .rel.gnu.linkonce.d.*)
+ *(.rel.tdata .rel.tdata.* .rel.gnu.linkonce.td.*)
+ *(.rel.tbss .rel.tbss.* .rel.gnu.linkonce.tb.*)
+ *(.rel.ctors)
+ *(.rel.dtors)
+ *(.rel.got)
+ .rel.got       0x0000000008048094        0x0 kernel/kernel.o
+ *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*)
+ *(.rel.ifunc)
+
+.rel.plt        0x0000000008048094        0x0
+ *(.rel.plt)
+                [!provide]                        PROVIDE (__rel_iplt_start = .)
+ *(.rel.iplt)
+ .rel.iplt      0x0000000008048094        0x0 kernel/kernel.o
+                [!provide]                        PROVIDE (__rel_iplt_end = .)
+
+.init
+ *(SORT_NONE(.init))
+
+.plt            0x0000000008048098        0x0
+ *(.plt)
+ *(.iplt)
+ .iplt          0x0000000008048098        0x0 kernel/kernel.o
+
+.plt.got
+ *(.plt.got)
+
+.plt.sec
+ *(.plt.sec)
+
+.text           0x0000000000030400     0x4cd6
+ *(.text.unlikely .text.*_unlikely .text.unlikely.*)
+ *(.text.exit .text.exit.*)
+ *(.text.startup .text.startup.*)
+ *(.text.hot .text.hot.*)
+ *(.text .stub .text.* .gnu.linkonce.t.*)
+ .text          0x0000000000030400       0x3e kernel/kernel.o
+                0x0000000000030400                _start
+ .text          0x000000000003043e      0x133 kernel/clock.o
+                0x000000000003043e                clock_handler
+                0x00000000000304a1                milli_delay
+                0x00000000000304f1                init_clock
+                0x000000000003055a                sys_get_ticks
+ .text.__x86.get_pc_thunk.ax
+                0x0000000000030571        0x4 kernel/clock.o
+                0x0000000000030571                __x86.get_pc_thunk.ax
+ .text.__x86.get_pc_thunk.cx
+                0x0000000000030575        0x4 kernel/clock.o
+                0x0000000000030575                __x86.get_pc_thunk.cx
+ .text.__x86.get_pc_thunk.bx
+                0x0000000000030579        0x4 kernel/clock.o
+                0x0000000000030579                __x86.get_pc_thunk.bx
+ .text          0x000000000003057d      0x4bf kernel/console.o
+                0x000000000003057d                init_screen
+                0x00000000000306b8                out_char
+                0x0000000000030956                scroll_screen
+                0x00000000000309cb                is_current_console
+                0x00000000000309f6                select_console
+ .text          0x0000000000030a3c      0x157 kernel/exception_handler.o
+                0x0000000000030a3c                exception_handler
+ .text          0x0000000000030b93       0x56 kernel/fs.o
+                0x0000000000030b93                task_fs
+ .text          0x0000000000030be9        0x0 kernel/global.o
+ .text          0x0000000000030be9      0x552 kernel/hd.o
+                0x0000000000030be9                task_hd
+                0x0000000000031100                hd_handler
+ .text          0x000000000003113b      0x522 kernel/init_idt.o
+                0x000000000003113b                spurious_irq
+                0x0000000000031185                put_irq_handler
+                0x00000000000311ba                init_idt
+ *fill*         0x000000000003165d        0x3 
+ .text          0x0000000000031660      0x3b0 kernel/interrupt.o
+                0x0000000000031660                hwint00
+                0x0000000000031690                hwint01
+                0x00000000000316c0                hwint02
+                0x00000000000316f0                hwint03
+                0x0000000000031720                hwint04
+                0x0000000000031750                hwint05
+                0x0000000000031780                hwint06
+                0x00000000000317b0                hwint07
+                0x00000000000317e0                hwint08
+                0x0000000000031810                hwint09
+                0x0000000000031840                hwint10
+                0x0000000000031870                hwint11
+                0x00000000000318a0                hwint12
+                0x00000000000318d0                hwint13
+                0x0000000000031900                hwint14
+                0x0000000000031930                hwint15
+                0x0000000000031954                divide_error
+                0x000000000003195a                single_step_exception
+                0x0000000000031960                nmi
+                0x0000000000031966                breakpoint_exception
+                0x000000000003196c                overflow
+                0x0000000000031972                bounds_check
+                0x0000000000031978                inval_opcode
+                0x000000000003197e                copr_not_available
+                0x0000000000031984                double_fault
+                0x0000000000031988                copr_seg_overrun
+                0x000000000003198e                inval_tss
+                0x0000000000031992                segment_not_present
+                0x0000000000031996                stack_exception
+                0x000000000003199a                general_protection
+                0x000000000003199e                page_fault
+                0x00000000000319a2                copr_error
+                0x00000000000319b1                save
+                0x00000000000319eb                restart
+ .text          0x0000000000031a10     0x1996 kernel/ipc.o
+                0x0000000000031ad6                sys_sendrec
+                0x0000000000031c1d                send_recv
+                0x0000000000031cec                reset_msg
+                0x0000000000032b31                inform_int
+                0x0000000000032e99                dump_proc
+                0x0000000000033275                dump_msg
+ .text.__x86.get_pc_thunk.dx
+                0x00000000000333a6        0x4 kernel/ipc.o
+                0x00000000000333a6                __x86.get_pc_thunk.dx
+ .text          0x00000000000333aa      0x767 kernel/keyboard.o
+                0x00000000000333aa                keyboard_handler
+                0x0000000000033432                init_keyboard
+                0x00000000000334f2                keyboard_read
+ .text          0x0000000000033b11        0x0 kernel/keymap.o
+ .text          0x0000000000033b11      0x56c kernel/main.o
+                0x0000000000033bfb                cstart
+                0x0000000000033da8                kernel_main
+ .text          0x000000000003407d        0x0 kernel/mm.o
+ .text          0x000000000003407d      0x171 kernel/proc.o
+                0x000000000003407d                schedule
+                0x0000000000034131                TestA
+                0x0000000000034174                TestB
+                0x00000000000341b1                TestC
+ *fill*         0x00000000000341ee        0x2 
+ .text          0x00000000000341f0       0x40 kernel/syscall.o
+                0x00000000000341f0                sendrec
+                0x0000000000034204                printx
+                0x0000000000034210                sys_call
+ .text          0x0000000000034230       0x43 kernel/syscallc.o
+                0x0000000000034230                get_ticks
+ .text          0x0000000000034273       0x69 kernel/systask.o
+                0x0000000000034273                task_sys
+ .text          0x00000000000342dc      0x3b7 kernel/tty.o
+                0x00000000000342dc                task_tty
+                0x000000000003451f                respond_key
+                0x000000000003463e                tty_write
+ .text          0x0000000000034693       0xeb lib/klib.o
+                0x0000000000034693                itoa
+                0x0000000000034748                disp_int
+ *fill*         0x000000000003477e        0x2 
+ .text          0x0000000000034780      0x1d6 lib/kliba.o
+                0x0000000000034780                disp_str
+                0x00000000000347c6                disp_color_str
+                0x000000000003480d                out_byte
+                0x000000000003481f                in_byte
+                0x000000000003482e                port_read
+                0x0000000000034848                port_write
+                0x0000000000034862                disable_irq
+                0x00000000000348a0                enable_irq
+                0x00000000000348c9                disable_int
+                0x00000000000348cb                enable_int
+                0x00000000000348cd                glitter
+ *fill*         0x0000000000034956        0xa 
+ .text          0x0000000000034960       0x7a lib/memory.o
+                0x0000000000034960                memcpy
+                0x0000000000034987                memset
+                0x00000000000349a6                strcpy
+                0x00000000000349c2                strlen
+ .text          0x00000000000349da       0xcd lib/misc.o
+                0x00000000000349da                spin
+                0x0000000000034a04                assertion_failure
+                0x0000000000034a50                panic
+ .text          0x0000000000034aa7      0x62f lib/printf.o
+                0x0000000000034bdd                sys_printx
+                0x0000000000034db7                vsprintf
+                0x0000000000035047                sprintf
+                0x0000000000035077                printf
+ *(.gnu.warning)
+
+.fini
+ *(SORT_NONE(.fini))
+                [!provide]                        PROVIDE (__etext = .)
+                [!provide]                        PROVIDE (_etext = .)
+                [!provide]                        PROVIDE (etext = .)
+
+.rodata         0x00000000000350e0      0xe45
+ *(.rodata .rodata.* .gnu.linkonce.r.*)
+ .rodata        0x00000000000350e0      0x540 kernel/exception_handler.o
+ .rodata        0x0000000000035620       0x19 kernel/fs.o
+ *fill*         0x0000000000035639        0x3 
+ .rodata        0x000000000003563c        0x4 kernel/global.o
+                0x000000000003563c                FSBUF_SIZE
+ .rodata        0x0000000000035640       0xbd kernel/hd.o
+ .rodata        0x00000000000356fd       0x11 kernel/init_idt.o
+ *fill*         0x000000000003570e        0x2 
+ .rodata        0x0000000000035710      0x5f2 kernel/ipc.o
+ *fill*         0x0000000000035d02        0x2 
+ .rodata        0x0000000000035d04       0x64 kernel/keyboard.o
+ .rodata        0x0000000000035d68       0x68 kernel/main.o
+ .rodata        0x0000000000035dd0       0x11 kernel/proc.o
+ .rodata        0x0000000000035de1       0x11 kernel/systask.o
+ *fill*         0x0000000000035df2        0x2 
+ .rodata        0x0000000000035df4       0x90 kernel/tty.o
+ .rodata        0x0000000000035e84       0x71 lib/misc.o
+ .rodata        0x0000000000035ef5       0x30 lib/printf.o
+
+.rodata1
+ *(.rodata1)
+
+.eh_frame_hdr
+ *(.eh_frame_hdr)
+ *(.eh_frame_entry .eh_frame_entry.*)
+
+.eh_frame       0x0000000000035f28      0xaf0
+ *(.eh_frame)
+ .eh_frame      0x0000000000035f28       0xe0 kernel/clock.o
+ .eh_frame      0x0000000000036008      0x10c kernel/console.o
+                                        0x160 (松开之前的大小)
+ .eh_frame      0x0000000000036114       0x30 kernel/exception_handler.o
+                                         0x5c (松开之前的大小)
+ .eh_frame      0x0000000000036144       0x24 kernel/fs.o
+                                         0x50 (松开之前的大小)
+ .eh_frame      0x0000000000036168      0x118 kernel/hd.o
+                                        0x158 (松开之前的大小)
+ .eh_frame      0x0000000000036280       0xb4 kernel/init_idt.o
+                                         0xf4 (松开之前的大小)
+ .eh_frame      0x0000000000036334      0x200 kernel/ipc.o
+                                        0x240 (松开之前的大小)
+ .eh_frame      0x0000000000036534       0xfc kernel/keyboard.o
+                                        0x128 (松开之前的大小)
+ .eh_frame      0x0000000000036630       0xa8 kernel/main.o
+                                         0xe8 (松开之前的大小)
+ .eh_frame      0x00000000000366d8       0x74 kernel/proc.o
+                                         0xb4 (松开之前的大小)
+ .eh_frame      0x000000000003674c       0x24 kernel/syscallc.o
+                                         0x50 (松开之前的大小)
+ .eh_frame      0x0000000000036770       0x1c kernel/systask.o
+                                         0x48 (松开之前的大小)
+ .eh_frame      0x000000000003678c       0xf0 kernel/tty.o
+                                        0x144 (松开之前的大小)
+ .eh_frame      0x000000000003687c       0x44 lib/klib.o
+                                         0x84 (松开之前的大小)
+ .eh_frame      0x00000000000368c0       0x64 lib/misc.o
+                                         0xa4 (松开之前的大小)
+ .eh_frame      0x0000000000036924       0xf4 lib/printf.o
+                                        0x134 (松开之前的大小)
+ *(.eh_frame.*)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.gnu_extab
+ *(.gnu_extab*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+                0x0000000000038000                . = DATA_SEGMENT_ALIGN (CONSTANT (MAXPAGESIZE), CONSTANT (COMMONPAGESIZE))
+
+.eh_frame
+ *(.eh_frame)
+ *(.eh_frame.*)
+
+.gnu_extab
+ *(.gnu_extab)
+
+.gcc_except_table
+ *(.gcc_except_table .gcc_except_table.*)
+
+.exception_ranges
+ *(.exception_ranges .exception_ranges*)
+
+.tdata
+ *(.tdata .tdata.* .gnu.linkonce.td.*)
+
+.tbss
+ *(.tbss .tbss.* .gnu.linkonce.tb.*)
+ *(.tcommon)
+
+.preinit_array  0x0000000000038000        0x0
+                [!provide]                        PROVIDE (__preinit_array_start = .)
+ *(.preinit_array)
+                [!provide]                        PROVIDE (__preinit_array_end = .)
+
+.init_array     0x0000000000038000        0x0
+                [!provide]                        PROVIDE (__init_array_start = .)
+ *(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*))
+ *(.init_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .ctors)
+                [!provide]                        PROVIDE (__init_array_end = .)
+
+.fini_array     0x0000000000038000        0x0
+                [!provide]                        PROVIDE (__fini_array_start = .)
+ *(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*))
+ *(.fini_array EXCLUDE_FILE(*crtend?.o *crtend.o *crtbegin?.o *crtbegin.o) .dtors)
+                [!provide]                        PROVIDE (__fini_array_end = .)
+
+.ctors
+ *crtbegin.o(.ctors)
+ *crtbegin?.o(.ctors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+ *(SORT_BY_NAME(.ctors.*))
+ *(.ctors)
+
+.dtors
+ *crtbegin.o(.dtors)
+ *crtbegin?.o(.dtors)
+ *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+ *(SORT_BY_NAME(.dtors.*))
+ *(.dtors)
+
+.jcr
+ *(.jcr)
+
+.data.rel.ro
+ *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*)
+ *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*)
+
+.dynamic
+ *(.dynamic)
+
+.got            0x0000000000038000        0x0
+ *(.got)
+ .got           0x0000000000038000        0x0 kernel/kernel.o
+ *(.igot)
+                0x0000000000038ff4                . = DATA_SEGMENT_RELRO_END (., (SIZEOF (.got.plt) >= 0xc)?0xc:0x0)
+
+.got.plt        0x0000000000038000        0xc
+ *(.got.plt)
+ .got.plt       0x0000000000038000        0xc kernel/kernel.o
+                0x0000000000038000                _GLOBAL_OFFSET_TABLE_
+ *(.igot.plt)
+ .igot.plt      0x000000000003800c        0x0 kernel/kernel.o
+
+.data           0x0000000000038020      0x760
+ *(.data .data.* .gnu.linkonce.d.*)
+ .data          0x0000000000038020        0x0 kernel/clock.o
+ .data          0x0000000000038020        0x0 kernel/console.o
+ .data          0x0000000000038020        0x0 kernel/exception_handler.o
+ .data          0x0000000000038020        0x0 kernel/fs.o
+ .data          0x0000000000038020       0x1c kernel/global.o
+                0x0000000000038020                dd_map
+                0x0000000000038038                fsbuf
+ *fill*         0x000000000003803c        0x4 
+ .data.rel      0x0000000000038040      0x124 kernel/global.o
+                0x0000000000038040                task_table
+                0x00000000000380e0                user_proc_table
+                0x0000000000038158                sys_call_table
+ .data          0x0000000000038164        0x0 kernel/hd.o
+ .data          0x0000000000038164        0x0 kernel/init_idt.o
+ .data          0x0000000000038164        0x0 kernel/ipc.o
+ .data          0x0000000000038164        0x0 kernel/keyboard.o
+ *fill*         0x0000000000038164       0x1c 
+ .data          0x0000000000038180      0x600 kernel/keymap.o
+                0x0000000000038180                keymap
+ .data          0x0000000000038780        0x0 kernel/main.o
+ .data          0x0000000000038780        0x0 kernel/mm.o
+ .data          0x0000000000038780        0x0 kernel/proc.o
+ .data          0x0000000000038780        0x0 kernel/syscallc.o
+ .data          0x0000000000038780        0x0 kernel/systask.o
+ .data          0x0000000000038780        0x0 kernel/tty.o
+ .data          0x0000000000038780        0x0 lib/klib.o
+ .data          0x0000000000038780        0x0 lib/misc.o
+ .data          0x0000000000038780        0x0 lib/printf.o
+
+.data1
+ *(.data1)
+                0x0000000000038780                _edata = .
+                [!provide]                        PROVIDE (edata = .)
+                0x0000000000038780                . = .
+                0x0000000000038780                __bss_start = .
+
+.bss            0x0000000000038780    0x3a188
+ *(.dynbss)
+ *(.bss .bss.* .gnu.linkonce.b.*)
+ .bss           0x0000000000038780      0x800 kernel/kernel.o
+                0x0000000000038f80                StackTop
+ .bss           0x0000000000038f80        0x0 kernel/clock.o
+ .bss           0x0000000000038f80        0x0 kernel/console.o
+ .bss           0x0000000000038f80        0x0 kernel/exception_handler.o
+ .bss           0x0000000000038f80        0x0 kernel/fs.o
+ .bss           0x0000000000038f80        0x0 kernel/global.o
+ .bss           0x0000000000038f80      0x420 kernel/hd.o
+ .bss           0x00000000000393a0        0x0 kernel/init_idt.o
+ .bss           0x00000000000393a0        0x0 kernel/ipc.o
+ .bss           0x00000000000393a0       0x58 kernel/keyboard.o
+ .bss           0x00000000000393f8        0x0 kernel/keymap.o
+ .bss           0x00000000000393f8        0x0 kernel/main.o
+ .bss           0x00000000000393f8        0x0 kernel/mm.o
+ .bss           0x00000000000393f8        0x0 kernel/proc.o
+ .bss           0x00000000000393f8        0x0 kernel/syscallc.o
+ .bss           0x00000000000393f8        0x0 kernel/systask.o
+ .bss           0x00000000000393f8        0x0 kernel/tty.o
+ .bss           0x00000000000393f8        0x0 lib/klib.o
+ .bss           0x00000000000393f8        0x0 lib/misc.o
+ .bss           0x00000000000393f8        0x0 lib/printf.o
+ *(COMMON)
+ COMMON         0x00000000000393f8       0x10 kernel/clock.o
+                0x00000000000393f8                PARTITION_ENTRY
+ *fill*         0x0000000000039408       0x18 
+ COMMON         0x0000000000039420    0x394e8 kernel/global.o
+                0x0000000000039420                idt_ptr
+                0x0000000000039440                task_stack
+                0x0000000000071440                k_reenter
+                0x0000000000071460                gdt
+                0x0000000000071860                tty_table
+                0x0000000000071ba0                tss
+                0x0000000000071c08                nr_current_console
+                0x0000000000071c0c                disp_pos
+                0x0000000000071c10                gdt_ptr
+                0x0000000000071c20                idt
+                0x0000000000072420                ticks
+                0x0000000000072440                console_table
+                0x0000000000072480                irq_table
+                0x00000000000724c0                p_proc_ready
+                0x00000000000724e0                proc_table
+                0x0000000000072908                . = ALIGN ((. != 0x0)?0x4:0x1)
+                0x0000000000072908                . = ALIGN (0x4)
+                0x0000000000072908                . = SEGMENT_START ("ldata-segment", .)
+                0x0000000000072908                . = ALIGN (0x4)
+                0x0000000000072908                _end = .
+                [!provide]                        PROVIDE (end = .)
+                0x0000000000072908                . = DATA_SEGMENT_END (.)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x0000000000000000       0x2b
+ *(.comment)
+ .comment       0x0000000000000000       0x2b kernel/clock.o
+                                         0x2c (松开之前的大小)
+ .comment       0x000000000000002b       0x2c kernel/console.o
+ .comment       0x000000000000002b       0x2c kernel/exception_handler.o
+ .comment       0x000000000000002b       0x2c kernel/fs.o
+ .comment       0x000000000000002b       0x2c kernel/global.o
+ .comment       0x000000000000002b       0x2c kernel/hd.o
+ .comment       0x000000000000002b       0x2c kernel/init_idt.o
+ .comment       0x000000000000002b       0x2c kernel/ipc.o
+ .comment       0x000000000000002b       0x2c kernel/keyboard.o
+ .comment       0x000000000000002b       0x2c kernel/keymap.o
+ .comment       0x000000000000002b       0x2c kernel/main.o
+ .comment       0x000000000000002b       0x2c kernel/mm.o
+ .comment       0x000000000000002b       0x2c kernel/proc.o
+ .comment       0x000000000000002b       0x2c kernel/syscallc.o
+ .comment       0x000000000000002b       0x2c kernel/systask.o
+ .comment       0x000000000000002b       0x2c kernel/tty.o
+ .comment       0x000000000000002b       0x2c lib/klib.o
+ .comment       0x000000000000002b       0x2c lib/misc.o
+ .comment       0x000000000000002b       0x2c lib/printf.o
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info .gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line .debug_line.* .debug_line_end)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.debug_pubtypes
+ *(.debug_pubtypes)
+
+.debug_ranges
+ *(.debug_ranges)
+
+.debug_macro
+ *(.debug_macro)
+
+.debug_addr
+ *(.debug_addr)
+
+.gnu.attributes
+ *(.gnu.attributes)
+
+/DISCARD/
+ *(.note.GNU-stack)
+ *(.gnu_debuglink)
+ *(.gnu.lto_*)
+OUTPUT(kernel.bin elf32-i386)

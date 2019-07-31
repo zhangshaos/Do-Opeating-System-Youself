@@ -14,6 +14,7 @@ Date:		 	2019-7-16
 #include"struct_descript.h"
 #include"const_interrupt.h"
 #include"func_proto.h"
+#include "struct_proc.h"
 
 
 /* 辅助函数 */
@@ -198,9 +199,9 @@ PUBLIC int kernel_main()
 	}
 
 		/* user process take up TTY 1 */
-        proc_table[2].nr_tty = 1;
-        proc_table[3].nr_tty = 1;
-        proc_table[4].nr_tty = 1;
+        proc_table[NR_TASKS].nr_tty = 1;
+        proc_table[NR_TASKS+1].nr_tty = 1;
+        proc_table[NR_TASKS+2].nr_tty = 1;
 
 
 	/* 准备进程调度 */

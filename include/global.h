@@ -12,6 +12,7 @@ Date:		 	2019-7-15
 #include"struct_proc.h"
 #include"type.h"
 #include"struct_tty.h"
+#include "struct_hd.h"
 
 /* system clock offered by 8254 chips.(every tick means about 10ms)*/
 extern	int		ticks;
@@ -60,6 +61,9 @@ extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and priva
 extern  CONSOLE     console_table[];/* display characters on screen */
 
 /* scan code -> kaymap[] -> key */
-extern  u32 keymap[];           /* this array locates in "keymap.c" for its great scale... */
+extern  u32     keymap[];           /* this array locates in "keymap.c" for its great scale... */
+
+/* fs */
+extern	struct dev_drv_map	dd_map[];
 
 #endif
