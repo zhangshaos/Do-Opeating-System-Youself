@@ -37,12 +37,9 @@
 
 
 
-
-
-
-
-
-
+/**
+ * @File System Mainly Structure!!!
+ */
 struct super_block
 {
 	u32	magic;		        /* magic number */

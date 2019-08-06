@@ -23,28 +23,33 @@ KERNEL 	= 	kernel.bin
 #必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(30400))
 OBJS	= 	kernel/kernel.o\
 			kernel/clock.o\
-			kernel/console.o\
 			kernel/exception_handler.o\
-			kernel/fs.o\
 			kernel/global.o\
-			kernel/hd.o\
 			kernel/init_idt.o\
 			kernel/interrupt.o\
 			kernel/ipc.o\
-			kernel/keyboard.o\
-			kernel/keymap.o\
 			kernel/main.o\
-			kernel/mm.o\
 			kernel/proc.o\
-			kernel/syscall.o\
-			kernel/syscallc.o\
-			kernel/systask.o\
-			kernel/tty.o\
+			sys/syscall.o\
+			sys/syscallc.o\
+			sys/systask.o\
 			lib/klib.o\
 			lib/kliba.o\
 			lib/memory.o\
 			lib/misc.o\
-			lib/printf.o
+			lib/printf.o\
+			lib/open.o\
+			lib/close.o\
+			fs/fs_main.o\
+			fs/fs_misc.o\
+			fs/fs_open.o\
+			hd/hd.o\
+			mm/mm.o\
+			tty/console.o\
+			tty/keyboard.o\
+			tty/keymap.o\
+			tty/tty.o
+
 
 # 动作
 .PHONY : nop image clean mk_boot mk_obj mk_kernel mk_image
@@ -84,19 +89,16 @@ $(KERNEL):		$(OBJS)
 kernel/clock.o:	kernel/clock.c include/const.h include/global.h include/func_proto.h include/const_interrupt.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/console.o:	kernel/console.c include/const.h include/type.h include/struct_console.h include/struct_tty.h include/global.h include/func_proto.h 
+tty/console.o:	tty/console.c include/const.h include/type.h include/struct_console.h include/struct_tty.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/exception_handler.o:	kernel/exception_handler.c include/const.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/fs.o:	kernel/fs.c #还有其他的头文件暂时不管了...
-		gcc $< $(GCC_FLAGS) -o $@
-
 kernel/global.o:	kernel/global.c include/const.h include/type.h include/struct_descript.h include/struct_proc.h include/const_interrupt.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/hd.o:	kernel/hd.c #还有其他的头文件暂时不管了...
+hd/hd.o:	hd/hd.c #还有其他的头文件暂时不管了...
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/init_idt.o:	kernel/init_idt.c include/const.h include/const_interrupt.h include/global.h include/type.h include/func_proto.h 
@@ -111,31 +113,31 @@ kernel/ipc.o:	kernel/ipc.c include/type.h include/const.h include/struct_proc.h 
 kernel/kernel.o:	kernel/kernel.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
-kernel/keyboard.o:	kernel/keyboard.c include/const.h include/struct_keyboard.h include/type.h include/struct_tty.h include/const_interrupt.h include/global.h include/func_proto.h 
+tty/keyboard.o:	tty/keyboard.c include/const.h include/struct_keyboard.h include/type.h include/struct_tty.h include/const_interrupt.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/keymap.o:	kernel/keymap.c include/const.h include/type.h include/struct_keyboard.h 
+tty/keymap.o:	tty/keymap.c include/const.h include/type.h include/struct_keyboard.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/main.o:	kernel/main.c include/type.h include/const.h include/global.h include/struct_descript.h include/const_interrupt.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/mm.o:	kernel/mm.c include/type.h include/struct_proc.h include/global.h include/func_proto.h 
+mm/mm.o:	mm/mm.c include/type.h include/struct_proc.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
 kernel/proc.o:	kernel/proc.c include/const.h include/struct_proc.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/syscall.o:	kernel/syscall.asm include/const.inc
+sys/syscall.o:	sys/syscall.asm include/const.inc
 		nasm $< $(NASM_FLAGS_ELF) -o $@
 
-kernel/syscallc.o:	kernel/syscallc.c include/type.h include/const.h include/struct_proc.h include/func_proto.h 
+sys/syscallc.o:	sys/syscallc.c include/type.h include/const.h include/struct_proc.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/systask.o:	kernel/systask.c include/const.h include/type.h include/struct_proc.h include/global.h include/func_proto.h 
+sys/systask.o:	sys/systask.c include/const.h include/type.h include/struct_proc.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
-kernel/tty.o:	kernel/tty.c include/const.h include/type.h include/struct_tty.h include/struct_keyboard.h include/global.h include/func_proto.h 
+tty/tty.o:	tty/tty.c include/const.h include/type.h include/struct_tty.h include/struct_keyboard.h include/global.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
 lib/klib.o:	lib/klib.c include/const.h include/func_proto.h 
@@ -153,3 +155,17 @@ lib/misc.o:	lib/misc.c include/const.h include/func_proto.h
 lib/printf.o:	lib/printf.c include/type.h include/func_proto.h 
 		gcc $< $(GCC_FLAGS) -o $@
 
+lib/open.o:	lib/open.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+lib/close.o:	lib/close.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+fs/fs_main.o:	fs/fs_main.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+fs/fs_misc.o:	fs/fs_misc.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+fs/fs_open.o:	fs/fs_open.c 
+		gcc $< $(GCC_FLAGS) -o $@

@@ -64,8 +64,14 @@ extern  CONSOLE     console_table[];/* display characters on screen */
 extern  u32     keymap[];           /* this array locates in "keymap.c" for its great scale... */
 
 /* fs */
-extern	struct dev_drv_map	dd_map[];
+extern	struct file_desc	f_desc_table[];
+extern	struct inode		inode_table[];
+extern	struct super_block	super_block[];
 extern	u8 *			    fsbuf;
 extern	const int		    FSBUF_SIZE;
+extern	MESSAGE			    fs_msg;
+extern	PROCESS             *pcaller;
+extern	struct inode *		root_inode;
+extern	struct dev_drv_map	dd_map[];
 
 #endif

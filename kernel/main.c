@@ -181,16 +181,22 @@ PUBLIC int kernel_main()
 		p_proc->nr_tty 		= 0;		/* 所有进程默认使用tty0 */
 
 		/* 填充IPC相关 */
- 		p_proc->p_status 	= 0;	/* ready */
+ 		p_proc->p_status 		= 0;	/* ready */
 		p_proc->p_hold_msg 		= 0;
-		p_proc->p_want_recvfrom 	= NO_TASK;
+		p_proc->p_want_recvfrom = NO_TASK;
 		p_proc->p_want_sendto 	= NO_TASK;
-		p_proc->has_int_msg = 0;
-		p_proc->q_sending 	= 0;
-		p_proc->next_sending = 0;
+		p_proc->has_int_msg 	= 0;
+		p_proc->q_sending 		= 0;
+		p_proc->next_sending 	= 0;
 
 		/* 进程调用,进程优先级 */
 		p_proc->ticks = p_proc->priority = priority;
+
+		// 初始化进程的打开文件表
+		for (int j = 0; j < NR_FILES; j++)
+		{
+			p_proc->filp[j] = 0;
+		}
 
 		p_task_stack -= p_task->stacksize;
 		p_proc++;

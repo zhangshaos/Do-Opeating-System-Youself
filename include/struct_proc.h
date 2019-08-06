@@ -13,6 +13,7 @@ Date:		 	2019-7-13
 #include"type.h"
 #include"const.h"
 #include"struct_descript.h"
+#include"struct_fs.h"
 
 /* 任务状态段 */
 typedef struct s_tss {
@@ -108,6 +109,9 @@ typedef struct Proc {
  	struct Proc *next_sending;	/* the next process that deliver msg to the destination of this process  */
 
 	int nr_tty;		/* just for simplifying, every Process have its TTY. */
+
+	// 打开文件表
+	struct file_desc * filp[NR_FILES];
 }PROCESS;
 
 

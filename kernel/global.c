@@ -88,7 +88,7 @@ PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {
 	};
 
 
-struct dev_drv_map dd_map[] = {
+PUBLIC	struct dev_drv_map dd_map[] = {
 	{INVALID_DRIVER},	/**< 0 : Unused */
 	{INVALID_DRIVER},	/**< 1 : Reserved for floppy driver */
 	{INVALID_DRIVER},	/**< 2 : Reserved for cdrom driver */
@@ -101,5 +101,13 @@ struct dev_drv_map dd_map[] = {
  /**
  * 6MB~7MB: buffer for FS
  */
-PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
-PUBLIC	const int	FSBUF_SIZE	= 0x100000;
+PUBLIC	u8 *				fsbuf		= (u8*)0x600000;
+PUBLIC	const int			FSBUF_SIZE	= 0x100000;
+
+PUBLIC	struct file_desc	f_desc_table[NR_FILE_DESC];
+PUBLIC	struct inode		inode_table[NR_INODE];
+PUBLIC	struct super_block	super_block[NR_SUPER_BLOCK];
+
+PUBLIC	MESSAGE			    fs_msg;
+PUBLIC	PROCESS             *pcaller;
+PUBLIC	struct inode *		root_inode;

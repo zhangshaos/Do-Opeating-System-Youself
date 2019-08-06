@@ -10,6 +10,7 @@ Date:		 	2019-7-14
 #include"struct_proc.h"
 #include"global.h"
 #include"func_proto.h"
+#include"stdio.h"
 
 
 /*======================================================================*
@@ -60,11 +61,10 @@ PUBLIC void schedule()
  *======================================================================*/
 void TestA()
 {
-	int i = 0;
-	while (1) {
-		printf("<Ticks:%x>", get_ticks());	/* 进程A的两次printf之间大概100(0x64)个ticks,每个ticks10ms,即1000ms(1s) */
-		milli_delay(1000);
-	}
+	int fd = open("/blah", O_CREAT);
+	printf("fd: %d\n", fd);
+	close(fd);
+	spin("TestA");
 }
 
 /*======================================================================*

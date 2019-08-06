@@ -47,9 +47,22 @@ PUBLIC void respond_key(TTY* p_tty, u32 key);
 /* systask.c */
 PUBLIC void     task_sys();
 
-/* fs.c */
+/* fs/fs_main.c */
 PUBLIC void task_fs();
-PUBLIC int  rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void * buf);
+PUBLIC int      rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr, void * buf);
+PUBLIC struct inode *   get_inode(int dev, int num);
+PUBLIC void		put_inode(struct inode * pinode);
+PUBLIC void		sync_inode(struct inode * p);
+PUBLIC struct super_block *	get_super_block(int dev);
+
+/* fs/fs_open.c */
+PUBLIC int		do_open();
+PUBLIC int		do_close();
+
+/* fs/fs_misc.c */
+PUBLIC int		do_stat();
+PUBLIC int		strip_path(char * filename, const char * pathname, struct inode** ppinode);
+PUBLIC int		search_file(char * path);
 
 /* console.c */
 PUBLIC void out_char(CONSOLE* p_con, char ch);
@@ -141,7 +154,12 @@ PUBLIC  void    panic(const char *fmt, ...);
 PUBLIC	void*	memcpy(void* p_dst, void* p_src, int size);
 PUBLIC	void	memset(void* p_dst, char ch, int size);
 PUBLIC  char*   strcpy(char* p_dst, char* p_src);
-PUBLIC	int	    strlen(char* p_str);
+PUBLIC	int	    strlen(const char* p_str);
+
+/* lib/misc.c */
+PUBLIC	int	    memcmp(const void * s1, const void *s2, int n);
+PUBLIC	int	    strcmp(const char * s1, const char *s2);
+PUBLIC	char*	strcat(char * s1, const char *s2);
 
 
 /* lib/klib.c */
@@ -173,21 +191,21 @@ PUBLIC void     spin(char * func_name);
  * emmm, inline func must be here...
  * otherwise......
  *************************************************************/
-static  inline  u32     seg2phys(u16 seg)
+static inline  u32     seg2phys(u16 seg)
 {
 	DESCRIPTOR* p_dest = &gdt[seg >> 3];
 	return (p_dest->base_high << 24) | (p_dest->base_mid << 16) | (p_dest->base_low);
 };
-static  inline  u32     vir2phys(u32 seg_base, void *vir)
+static inline  u32     vir2phys(u32 seg_base, void *vir)
 {
 	return (u32)(((u32)seg_base) + (u32)(vir));
 };
-static  inline  int     ldt_seg_linear(PROCESS* p, int idx)
+static inline  int     ldt_seg_linear(PROCESS* p, int idx)
 {
 	DESCRIPTOR * d = p->ldts + idx;
 	return d->base_high << 24 | d->base_mid << 16 | d->base_low;
 }
-static  inline  void*   va2la(int pid, void* va)
+static inline  void*   va2la(int pid, void* va)
 {
 	PROCESS* p = proc_table + pid;
 

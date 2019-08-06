@@ -8,6 +8,8 @@
         "struct_proc.h": "c",
         "const_interrupt.h": "c",
         "type.h": "c",
-        "struct_tty.h": "c"
+        "struct_tty.h": "c",
+        "struct_hd.h": "c",
+        "stdio.h": "c"
     }
 }
