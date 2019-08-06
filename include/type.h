@@ -9,6 +9,14 @@ Other:			参见<Orange's 一个操作系统的实现>
 #ifndef	_ORANGES_TYPE_H_
 #define	_ORANGES_TYPE_H_
 
+/* EXTERN */
+#define	EXTERN	extern	/* EXTERN is defined as extern except in global.c */
+
+
+/* routine types */
+#define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
+#define	PRIVATE	static	/* PRIVATE x limits the scope of x */
+
 
 typedef	unsigned long long	u64;
 typedef	unsigned int		u32;

@@ -17,7 +17,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "console.h"
 #include "global.h"
 #include "proto.h"
-
+#include "stdio.h"
 
 /*======================================================================*
                             kernel_main
@@ -96,6 +96,12 @@ PUBLIC int kernel_main()
 
 		p_proc->ticks = p_proc->priority = prio;
 
+		// 打开文件表初始化
+		for (int j = 0; j < NR_FILES; j++)
+		{
+			p_proc->filp[j] = 0;
+		}
+
 		p_task_stack -= p_task->stacksize;
 		p_proc++;
 		p_task++;
@@ -137,10 +143,10 @@ PUBLIC int kernel_main()
  *======================================================================*/
 void TestA()
 {
-	while (1) {
-		printf("<Ticks:%x>", get_ticks());	/* 进程A的两次printf之间大概100(0x64)个ticks,每个ticks10ms,即1000ms(1s) */
-		milli_delay(1000);
-	}
+	int fd = open("/blah", O_CREAT);
+	printf("fd: %d\n", fd);
+	close(fd);
+	spin("TestA");
 }
 
 /*======================================================================*
