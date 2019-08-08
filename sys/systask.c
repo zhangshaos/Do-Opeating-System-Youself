@@ -16,19 +16,21 @@ PUBLIC void task_sys()
 	MESSAGE msg;
 	while (1)
 	{
-		send_recv(RECEIVE, ANY, &msg);  /* block this dead loop,
-                                           until some process send msg
-                                           to this task. */
+		send_recv(RECEIVE, ANY, &msg);
 		int src = msg.source;
 
- 		switch (msg.type)
+		switch (msg.type)
 		{
 		case GET_TICKS:
 			msg.RETVAL = ticks;
 			send_recv(SEND, src, &msg);
 			break;
-
- 		default:
+		case GET_PID:
+			msg.type = SYSCALL_RET;
+			msg.PID = src;
+			send_recv(SEND, src, &msg);
+			break;
+		default:
 			panic("unknown msg type");
 			break;
 		}

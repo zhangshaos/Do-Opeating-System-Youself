@@ -74,7 +74,7 @@ enum msgtype {
 	HARD_INT = 1,
 
  	/* SYS task */
-	GET_TICKS,
+	GET_TICKS,GET_PID,
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
@@ -107,10 +107,9 @@ enum msgtype {
 #define	OFFSET		u.m3.m3i2 
 #define	WHENCE		u.m3.m3i3 
 
- /* #define	PID			u.m3.m3i2 */
+#define	PID			u.m3.m3i2
 /* #define	STATUS		u.m3.m3i1 */
 #define	RETVAL		u.m3.m3i1
-/* #define	STATUS		u.m3.m3i1 */
 
 
 

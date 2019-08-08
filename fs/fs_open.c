@@ -18,10 +18,6 @@
 #include "global.h"
 
 
-
-
-
-
 PRIVATE struct inode * 	create_file(char * path, int flags);
 PRIVATE int 			alloc_imap_bit(int dev);
 PRIVATE int 			alloc_smap_bit(int dev, int nr_sects_to_alloc);
@@ -156,13 +152,13 @@ PRIVATE struct inode * create_file(char * path, int flags)
 	if (strip_path(filename, path, &dir_inode) != 0)
 		return 0;
 
-	int inode_nr = alloc_imap_bit(dir_inode->i_dev);
+	int inode_nr 		= alloc_imap_bit(dir_inode->i_dev);
 
-	int free_sect_nr = alloc_smap_bit(dir_inode->i_dev,
-					  NR_DEFAULT_FILE_SECTS);
+	int free_sect_nr 	= alloc_smap_bit(dir_inode->i_dev,
+					  					NR_DEFAULT_FILE_SECTS);
 
-	struct inode *newino = new_inode(dir_inode->i_dev, inode_nr,
-					 free_sect_nr);
+	struct inode*newino	= new_inode(dir_inode->i_dev, inode_nr,
+					 				free_sect_nr);
 
 	new_dir_entry(dir_inode, newino->i_num, filename);
 
@@ -239,21 +235,26 @@ PUBLIC int do_lseek()
 PRIVATE int alloc_imap_bit(int dev)
 {
 	int inode_nr = 0;
-	int i, j, k;
 
-	int imap_blk0_nr = 1 + 1; /* 1 boot sector & 1 super block */
+	int imap_blk0_nr	 	= 1 + 1; /* 1 boot sector & 1 super block */
 	struct super_block * sb = get_super_block(dev);
 
-	for (i = 0; i < sb->nr_imap_sects; i++) {
+	for (int i = 0; i < sb->nr_imap_sects; i++) 
+	{
 		RD_SECT(dev, imap_blk0_nr + i);
 
-		for (j = 0; j < SECTOR_SIZE; j++) {
+		for (int j = 0; j < SECTOR_SIZE; j++) 
+		{
 			/* skip `11111111' bytes */
 			if (fsbuf[j] == 0xFF)
 				continue;
 
-			/* skip `1' bits */
-			for (k = 0; ((fsbuf[j] >> k) & 1) != 0; k++) {}
+			/* skip `1' bits to find '0' bit */
+			int k;
+			for (k = 0; (fsbuf[j] >> k) & 1; k++) {	}
+			// now:
+			// 7...k...0 (bit)
+			// [   01..1](one byte)
 
 			/* i: sector index; j: byte index; k: bit index */
 			inode_nr = (i * SECTOR_SIZE + j) * 8 + k;
@@ -264,6 +265,7 @@ PRIVATE int alloc_imap_bit(int dev)
 			break;
 		}
 
+		// we have only one imap!
 		return inode_nr;
 	}
 
@@ -297,22 +299,33 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
 	int smap_blk0_nr = 1 + 1 + sb->nr_imap_sects;
 	int free_sect_nr = 0;
 
-	for (i = 0; i < sb->nr_smap_sects; i++) { /* smap_blk0_nr + i :
-						     current sect nr. */
+	for (i = 0; i < sb->nr_smap_sects; i++) 
+	{ 
+		/* smap_blk0_nr + i : current sect nr. */
 		RD_SECT(dev, smap_blk0_nr + i);
 
 		/* byte offset in current sect */
-		for (j = 0; j < SECTOR_SIZE && nr_sects_to_alloc > 0; j++) {
+		for (j = 0; j < SECTOR_SIZE && nr_sects_to_alloc > 0; j++) 
+		{
 			k = 0;
-			if (!free_sect_nr) {
+			if (!free_sect_nr) 
+			{
 				/* loop until a free bit is found */
-				if (fsbuf[j] == 0xFF) continue;
-				for (; ((fsbuf[j] >> k) & 1) != 0; k++) {}
+				if (fsbuf[j] == 0xFF) 
+					continue;
+
+				// fsbuf[j] != 0xff
+				for ( ; (fsbuf[j] >> k) & 1; k++) { }
+				// now:
+				// 7...k...0 (bit)
+				// [   01..1](one byte)
+
 				free_sect_nr = (i * SECTOR_SIZE + j) * 8 +
-					k - 1 + sb->n_1st_sect;
+								k + sb->n_1st_sect - 1;	//注意imap和smap的第一位都保留了,所以通常情况下sb->n_1st_sect == 1
 			}
 
-			for (; k < 8; k++) { /* repeat till enough bits are set */
+			for ( ; k < 8; k++) 
+			{ /* repeat till enough bits are set */
 				assert(((fsbuf[j] >> k) & 1) == 0);
 				fsbuf[j] |= (1 << k);
 				if (--nr_sects_to_alloc == 0)

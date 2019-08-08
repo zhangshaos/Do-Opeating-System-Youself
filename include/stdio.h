@@ -1,13 +1,6 @@
-/*************************************************************************//**
- *****************************************************************************
- * @file   stdio.h
- * @brief  
- * @author Forrest Y. Yu
- * @date   2008
- *****************************************************************************
- *****************************************************************************/
 
-#include "const.h"
+
+
 
 /* string */
 #define	O_CREAT		1
@@ -24,7 +17,21 @@
 /*--------*/
 
 /* lib/open.c */
-PUBLIC	int	open(const char *pathname, int flags);
+PUBLIC	int	open		(const char *pathname, int flags);
 
 /* lib/close.c */
-PUBLIC	int	close(int fd);
+PUBLIC	int	close		(int fd);
+
+/* lib/read.c */
+PUBLIC int	read		(int fd, void *buf, int count);
+
+/* lib/write.c */
+PUBLIC int	write		(int fd, const void *buf, int count);
+
+/* lib/unlink.c */
+PUBLIC	int	unlink		(const char *pathname);
+
+/* lib/getpid.c */
+PUBLIC int	getpid		();
+
+

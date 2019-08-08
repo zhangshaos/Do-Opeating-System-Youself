@@ -17,11 +17,6 @@
 #include "stdio.h"
 
 
-
-
-
-
-
 /*****************************************************************************
  *                                search_file
  *****************************************************************************/
@@ -36,11 +31,10 @@
  *****************************************************************************/
 PUBLIC int search_file(char * path)
 {
-	int i, j;
-
 	char filename[MAX_PATH];
 	memset(filename, 0, MAX_FILENAME_LEN);
-	struct inode * dir_inode;
+	struct inode * dir_inode;	//由于我们采用的是flat file system,所以这个一般指向'/'iNode
+
 	if (strip_path(filename, path, &dir_inode) != 0)
 		return 0;
 
@@ -50,36 +44,35 @@ PUBLIC int search_file(char * path)
 	/**
 	 * Search the dir for the file.
 	 */
-	int dir_blk0_nr = dir_inode->i_start_sect;
-	int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE - 1) / SECTOR_SIZE;
+	int dir_blk0_nr = dir_inode->i_start_sect;	//目录iNode指向的第一个扇区
+	int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE - 1) / SECTOR_SIZE;	//目录iNode包含的目录项(dir_entry)所占的扇区数
+	// 目录iNode包含的最大目录项(dir_entry)数
 	int nr_dir_entries =
-	  dir_inode->i_size / DIR_ENTRY_SIZE; /**
-					       * including unused slots
-					       * (the file has been deleted
-					       * but the slot is still there)
-					       */
-	int m = 0;
+	  					dir_inode->i_size / DIR_ENTRY_SIZE;/**
+					       									* including unused slots
+					      									* (the file has been deleted
+					       									* but the slot is still there)
+					       									*/
+	// 已经搜索过的目录项(dir entry)数目,用于检测是否检查完'/'目录下的所有目录项
+	int serched_dir_entries = 0;
 	struct dir_entry * pde;
-	for (i = 0; i < nr_dir_blks; i++) 
+	// 搜索iNode'/'指向的包含目录项(dir entry)的所有扇区
+	for (int i = 0; i < nr_dir_blks; i++) 
 	{
 		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
 		pde = (struct dir_entry *)fsbuf;
-		for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) 
+		// 搜索一个扇区中所有的目录项(dir entry)
+		for (int j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) 
 		{
-			// @Debug Here
-			// printf("filename:%s\n",filename);
-			// printf("pde->name:%s\n",pde->name);
-
 			if (memcmp(filename, pde->name, MAX_FILENAME_LEN) == 0)
 				return pde->inode_nr;
-			if (++m > nr_dir_entries)
+			if (++serched_dir_entries > nr_dir_entries)
 				break;
 		}
-		if (m > nr_dir_entries) /* all entries have been iterated */
+		if (serched_dir_entries > nr_dir_entries) /* all entries have been iterated */
 			break;
 	}
 
-	/* file not found */
 	return 0;
 }
 
@@ -138,4 +131,5 @@ PUBLIC int strip_path(char * filename, const char * pathname,
 
 	return 0;
 }
+
 

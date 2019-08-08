@@ -3,15 +3,6 @@
 
 
 #include "func_proto.h"
-#include "type.h"
-#include "const.h"
-#include "struct_proc.h"
-#include "global.h"
-#include "struct_proc.h"
-#include "struct_fs.h"
-#include "struct_hd.h"
-
-
 
 
 PRIVATE void init_fs();
@@ -46,15 +37,15 @@ PUBLIC void task_fs()
 		case CLOSE:
 			fs_msg.RETVAL = do_close();
 			break;
-		/* case READ: */
-		/* case WRITE: */
-		/* 	fs_msg.CNT = do_rdwt(); */
-		/* 	break; */
+		case READ:
+		case WRITE:
+			fs_msg.CNT = do_rdwt();
+			break;
+		case UNLINK:
+			fs_msg.RETVAL = do_unlink();
+			break;
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
-		/* 	break; */
-		/* case UNLINK: */
-		/* 	fs_msg.RETVAL = do_unlink(); */
 		/* 	break; */
 		/* case RESUME_PROC: */
 		/* 	src = fs_msg.PROC_NR; */
@@ -128,7 +119,6 @@ PRIVATE void init_fs()
 
 
 
-
 /*****************************************************************************
  *                                mkfs
  *****************************************************************************/
@@ -145,9 +135,9 @@ PRIVATE void mkfs()
 {
 	MESSAGE driver_msg;
 
- 	int bits_per_sect = SECTOR_SIZE * 8; /* 8 bits per byte */
+	int bits_per_sect = SECTOR_SIZE * 8; /* 8 bits per byte */
 
- 	/* get the geometry of ROOTDEV */
+	/* get the geometry of ROOTDEV */
 	struct part_info geo;
 	driver_msg.type		= DEV_IOCTL;
 	driver_msg.DEVICE	= MINOR(ROOT_DEV);
@@ -155,20 +145,17 @@ PRIVATE void mkfs()
 	driver_msg.BUF		= &geo;
 	driver_msg.PROC_NR	= TASK_FS;
 
+	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
 
- 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
-
- 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
-
-
- 	printf("ROOT dev size: 0x%x sectors\n", geo.size);
+	printf("ROOT dev size: 0x%x sectors\n", geo.size);
 
 
 
 
 
- 	/************************/
+	/************************/
 	/*      super block     */
 	/************************/
 	struct super_block sb;
@@ -183,22 +170,22 @@ PRIVATE void mkfs()
 	sb.root_inode	  	= ROOT_INODE;
 	sb.inode_size	  	= INODE_SIZE;
 
- 	struct inode x;
+	struct inode x;
 	sb.inode_isize_off	= (int)&x.i_size - (int)&x;
 	sb.inode_start_off	= (int)&x.i_start_sect - (int)&x;
 	sb.dir_ent_size	  	= DIR_ENTRY_SIZE;
 
- 	struct dir_entry de;
+	struct dir_entry de;
 	sb.dir_ent_inode_off = (int)&de.inode_nr - (int)&de;
 	sb.dir_ent_fname_off = (int)&de.name - (int)&de;
 
- 	memset(fsbuf, 0x90, SECTOR_SIZE);
+	memset(fsbuf, 0x90, SECTOR_SIZE);
 	memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);
 
- 	/* write the super block */
+	/* write the super block */
 	WR_SECT(ROOT_DEV, 1);
 
- 	/**@ ???
+	/**@ ???
 	 * Q : What about "%x 00" ?
 	 * A : 0x00 -> 8bits -> * 2^8(* 256);
 	 * 	   所以(base*2)<<8 => base * 2^9 => base(sector) * 512(bytes/sector)
@@ -220,7 +207,7 @@ PRIVATE void mkfs()
 
 
 
- 	/************************/
+	/************************/
 	/*       inode map      */
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
@@ -229,7 +216,7 @@ PRIVATE void mkfs()
 		fsbuf[0] |= 1 << i;
 	}
 
- 	assert(fsbuf[0] == 0x1F);/* 0001 1111 : 
+	assert(fsbuf[0] == 0x1F);/* 0001 1111 : 
 				  *    | ||||
 				  *    | |||`--- bit 0 : reserved
 				  *    | ||`---- bit 1 : the first inode,
@@ -245,7 +232,7 @@ PRIVATE void mkfs()
 
 
 
- 	/************************/
+	/************************/
 	/*      secter map      */
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
@@ -264,9 +251,9 @@ PRIVATE void mkfs()
 		fsbuf[i] |= (1 << j);
 	}
 
- 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
+	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
 
- 	/* zeromemory the rest sector-map */
+	/* zeromemory the rest sector-map */
 	memset(fsbuf, 0, SECTOR_SIZE);
 	for (int i = 1; i < sb.nr_smap_sects; i++)
 	{
@@ -278,7 +265,7 @@ PRIVATE void mkfs()
 
 
 
- 	/************************/
+	/************************/
 	/*       inodes         */
 	/************************/
 	/* inode of `/' */
@@ -301,22 +288,22 @@ PRIVATE void mkfs()
 		pi->i_nr_sects = 0;
 	}
 
- 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
+	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
 
 
 
 
- 	/************************/
+	/************************/
 	/*          `/'         */
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
 	struct dir_entry * pde = (struct dir_entry *)fsbuf;
 
- 	pde->inode_nr = 1;
+	pde->inode_nr = 1;
 	strcpy(pde->name, ".");
 
- 	/* dir entries of `/dev_tty0~2' */
+	/* dir entries of `/dev_tty0~2' */
 	for (int i = 0; i < NR_CONSOLES; i++) 
 	{
 		pde++;
@@ -328,7 +315,9 @@ PRIVATE void mkfs()
 
 
 
- /*****************************************************************************
+
+
+/*****************************************************************************
  *                                rw_sector
  *****************************************************************************/
 /**
@@ -348,19 +337,20 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 {
 	MESSAGE driver_msg;
 
- 	driver_msg.type		= io_type;
+	driver_msg.type		= io_type;
 	driver_msg.DEVICE	= MINOR(dev);
 	driver_msg.POSITION	= pos;
 	driver_msg.BUF		= buf;
 	driver_msg.CNT		= bytes;
 	driver_msg.PROC_NR	= proc_nr;
+	
+	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 
- 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
+	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
- 	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+	return 0;
+}
 
- 	return 0;
-}	
 
 
 
@@ -435,7 +425,7 @@ PUBLIC struct super_block * get_super_block(int dev)
  *                                get_inode
  *****************************************************************************/
 /**
- * <Ring 1> Get the inode ptr of given inode nr. A cache -- inode_table[] -- is
+ * <Ring 1> Get the inode ptr of given inode nr in A cache -- inode_table[] -- is
  * maintained to make things faster. If the inode requested is already there,
  * just return it. Otherwise the inode will be read from the disk.
  * 
@@ -449,42 +439,50 @@ PUBLIC struct inode * get_inode(int dev, int num)
 	if (num == 0)
 		return 0;
 
-	struct inode * p;
-	struct inode * q = 0;
-	for (p = &inode_table[0]; p < &inode_table[NR_INODE]; p++) {
-		if (p->i_cnt) {	/* not a free slot */
-			if ((p->i_dev == dev) && (p->i_num == num)) {
+	struct inode * p_inode_in_tbl;
+	struct inode * p_free_inode_in_tbl = 0;
+	for (p_inode_in_tbl = inode_table; p_inode_in_tbl < inode_table + NR_INODE; p_inode_in_tbl++) 
+	{
+		if (p_inode_in_tbl->i_cnt) 
+		{	/* not a free slot */
+			if ((p_inode_in_tbl->i_dev == dev) && (p_inode_in_tbl->i_num == num)) 
+			{
 				/* this is the inode we want */
-				p->i_cnt++;
-				return p;
+				p_inode_in_tbl->i_cnt++;
+				return p_inode_in_tbl;
 			}
 		}
-		else {		/* a free slot */
-			if (!q) /* q hasn't been assigned yet */
-				q = p; /* q <- the 1st free slot */
+		else 
+		{		/* a free slot */
+			if (0 == p_free_inode_in_tbl) /* p_free_inode_in_tbl hasn't been assigned yet */
+				p_free_inode_in_tbl = p_inode_in_tbl; /* p_free_inode_in_tbl <- the 1st free slot */
 		}
 	}
 
-	if (!q)
+	if (0 == p_free_inode_in_tbl)
 		panic("the inode table is full");
 
-	q->i_dev = dev;
-	q->i_num = num;
-	q->i_cnt = 1;
+	p_free_inode_in_tbl->i_dev = dev;
+	p_free_inode_in_tbl->i_num = num;
+	p_free_inode_in_tbl->i_cnt = 1;
 
 	struct super_block * sb = get_super_block(dev);
+	// blk_nr : 输入参数num对应的iNode所在扇区
 	int blk_nr = 1 + 1 + sb->nr_imap_sects + sb->nr_smap_sects +
-		((num - 1) / (SECTOR_SIZE / INODE_SIZE));
+				((num - 1) / (SECTOR_SIZE / INODE_SIZE));
 	RD_SECT(dev, blk_nr);
+	// pinode : 输入参数num对应的iNode(fsbuf中的映像)
 	struct inode * pinode =
-		(struct inode*)((u8*)fsbuf +
-				((num - 1 ) % (SECTOR_SIZE / INODE_SIZE))
-				 * INODE_SIZE);
-	q->i_mode = pinode->i_mode;
-	q->i_size = pinode->i_size;
-	q->i_start_sect = pinode->i_start_sect;
-	q->i_nr_sects = pinode->i_nr_sects;
-	return q;
+	(struct inode*)((u8*)fsbuf +
+								((num - 1 ) % (SECTOR_SIZE / INODE_SIZE))
+				 				* INODE_SIZE);
+	// 
+	p_free_inode_in_tbl->i_mode 		= pinode->i_mode;
+	p_free_inode_in_tbl->i_size 		= pinode->i_size;
+	p_free_inode_in_tbl->i_start_sect 	= pinode->i_start_sect;
+	p_free_inode_in_tbl->i_nr_sects 	= pinode->i_nr_sects;
+	
+	return p_free_inode_in_tbl;
 }
 
 /*****************************************************************************

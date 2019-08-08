@@ -1,6 +1,6 @@
 # Entry point
 # It must have the same value with 'KernelEntryPointPhyAddr' in load.inc!
-ENTRYPOINT	= 0x30400
+ENTRYPOINT	= 0x1000
 
 
 # 编译,链接
@@ -20,7 +20,7 @@ LD_FLAGS		=	-s -m elf_i386 -Ttext $(ENTRYPOINT) -Map ld.map
 # 编译后文件
 BOOT 	= 	boot/boot.bin boot/loader.bin
 KERNEL 	= 	kernel.bin
-#必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(30400))
+#必须要将kernel.o放在ld第一个文件,否则kernel.o中的不会出现在.text段最前面(导致_start != .text(0x1000))
 OBJS	= 	kernel/kernel.o\
 			kernel/clock.o\
 			kernel/exception_handler.o\
@@ -40,9 +40,15 @@ OBJS	= 	kernel/kernel.o\
 			lib/printf.o\
 			lib/open.o\
 			lib/close.o\
+			lib/getpid.o\
+			lib/read.o\
+			lib/write.o\
+			lib/unlink.o\
 			fs/fs_main.o\
 			fs/fs_misc.o\
 			fs/fs_open.o\
+			fs/fs_link.o\
+			fs/fs_read_write.o\
 			hd/hd.o\
 			mm/mm.o\
 			tty/console.o\
@@ -161,6 +167,18 @@ lib/open.o:	lib/open.c
 lib/close.o:	lib/close.c 
 		gcc $< $(GCC_FLAGS) -o $@
 
+lib/getpid.o:	lib/getpid.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+lib/read.o:	lib/read.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+lib/write.o:	lib/write.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+lib/unlink.o:	lib/unlink.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
 fs/fs_main.o:	fs/fs_main.c 
 		gcc $< $(GCC_FLAGS) -o $@
 
@@ -168,4 +186,10 @@ fs/fs_misc.o:	fs/fs_misc.c
 		gcc $< $(GCC_FLAGS) -o $@
 
 fs/fs_open.o:	fs/fs_open.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+fs/fs_link.o:	fs/fs_link.c 
+		gcc $< $(GCC_FLAGS) -o $@
+
+fs/fs_read_write.o:	fs/fs_read_write.c 
 		gcc $< $(GCC_FLAGS) -o $@
