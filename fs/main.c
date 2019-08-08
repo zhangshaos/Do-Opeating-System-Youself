@@ -54,15 +54,15 @@ PUBLIC void task_fs()
 		case CLOSE:
 			fs_msg.RETVAL = do_close();
 			break;
-		/* case READ: */
-		/* case WRITE: */
-		/* 	fs_msg.CNT = do_rdwt(); */
-		/* 	break; */
+		case READ:
+		case WRITE:
+			fs_msg.CNT = do_rdwt();
+			break;
+		case UNLINK:
+			fs_msg.RETVAL = do_unlink();
+			break;
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
-		/* 	break; */
-		/* case UNLINK: */
-		/* 	fs_msg.RETVAL = do_unlink(); */
 		/* 	break; */
 		/* case RESUME_PROC: */
 		/* 	src = fs_msg.PROC_NR; */
@@ -442,7 +442,7 @@ PUBLIC struct super_block * get_super_block(int dev)
  *                                get_inode
  *****************************************************************************/
 /**
- * <Ring 1> Get the inode ptr of given inode nr. A cache -- inode_table[] -- is
+ * <Ring 1> Get the inode ptr of given inode nr in A cache -- inode_table[] -- is
  * maintained to make things faster. If the inode requested is already there,
  * just return it. Otherwise the inode will be read from the disk.
  * 
@@ -456,42 +456,50 @@ PUBLIC struct inode * get_inode(int dev, int num)
 	if (num == 0)
 		return 0;
 
-	struct inode * p;
-	struct inode * q = 0;
-	for (p = &inode_table[0]; p < &inode_table[NR_INODE]; p++) {
-		if (p->i_cnt) {	/* not a free slot */
-			if ((p->i_dev == dev) && (p->i_num == num)) {
+	struct inode * p_inode_in_tbl;
+	struct inode * p_free_inode_in_tbl = 0;
+	for (p_inode_in_tbl = inode_table; p_inode_in_tbl < inode_table + NR_INODE; p_inode_in_tbl++) 
+	{
+		if (p_inode_in_tbl->i_cnt) 
+		{	/* not a free slot */
+			if ((p_inode_in_tbl->i_dev == dev) && (p_inode_in_tbl->i_num == num)) 
+			{
 				/* this is the inode we want */
-				p->i_cnt++;
-				return p;
+				p_inode_in_tbl->i_cnt++;
+				return p_inode_in_tbl;
 			}
 		}
-		else {		/* a free slot */
-			if (!q) /* q hasn't been assigned yet */
-				q = p; /* q <- the 1st free slot */
+		else 
+		{		/* a free slot */
+			if (0 == p_free_inode_in_tbl) /* p_free_inode_in_tbl hasn't been assigned yet */
+				p_free_inode_in_tbl = p_inode_in_tbl; /* p_free_inode_in_tbl <- the 1st free slot */
 		}
 	}
 
-	if (!q)
+	if (0 == p_free_inode_in_tbl)
 		panic("the inode table is full");
 
-	q->i_dev = dev;
-	q->i_num = num;
-	q->i_cnt = 1;
+	p_free_inode_in_tbl->i_dev = dev;
+	p_free_inode_in_tbl->i_num = num;
+	p_free_inode_in_tbl->i_cnt = 1;
 
 	struct super_block * sb = get_super_block(dev);
+	// blk_nr : 输入参数num对应的iNode所在扇区
 	int blk_nr = 1 + 1 + sb->nr_imap_sects + sb->nr_smap_sects +
-		((num - 1) / (SECTOR_SIZE / INODE_SIZE));
+				((num - 1) / (SECTOR_SIZE / INODE_SIZE));
 	RD_SECT(dev, blk_nr);
+	// pinode : 输入参数num对应的iNode(fsbuf中的映像)
 	struct inode * pinode =
-		(struct inode*)((u8*)fsbuf +
-				((num - 1 ) % (SECTOR_SIZE / INODE_SIZE))
-				 * INODE_SIZE);
-	q->i_mode = pinode->i_mode;
-	q->i_size = pinode->i_size;
-	q->i_start_sect = pinode->i_start_sect;
-	q->i_nr_sects = pinode->i_nr_sects;
-	return q;
+	(struct inode*)((u8*)fsbuf +
+								((num - 1 ) % (SECTOR_SIZE / INODE_SIZE))
+				 				* INODE_SIZE);
+	// 
+	p_free_inode_in_tbl->i_mode 		= pinode->i_mode;
+	p_free_inode_in_tbl->i_size 		= pinode->i_size;
+	p_free_inode_in_tbl->i_start_sect 	= pinode->i_start_sect;
+	p_free_inode_in_tbl->i_nr_sects 	= pinode->i_nr_sects;
+	
+	return p_free_inode_in_tbl;
 }
 
 /*****************************************************************************

@@ -12,6 +12,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "proc.h"
 #include "protect.h"
 #include "type.h"
+#include "const.h"
 
 typedef struct s_stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	gs;			/* ┓						│			*/
