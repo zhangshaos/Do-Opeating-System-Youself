@@ -74,7 +74,7 @@ PUBLIC int do_open()
 
 	int inode_nr = search_file(pathname);
 	// @Debug Here!
-	// printf("search_file return:%d\n",inode_nr);
+	// printl("search_file return:%d\n",inode_nr);
 
 	struct inode * pin = 0;
 	if (flags & O_CREAT) {

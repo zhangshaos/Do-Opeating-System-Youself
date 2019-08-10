@@ -23,7 +23,16 @@ Other:			参见<Orange's 一个操作系统的实现>
 PUBLIC void clock_handler(int irq)
 {
 	ticks++;
-	p_proc_ready->ticks--;	/* 减少正在运行的进程的剩余ticks */
+
+	if(p_proc_ready->ticks)
+	{
+		p_proc_ready->ticks--;	/* 减少正在运行的进程的剩余ticks */
+	}
+
+	if (key_pressed)
+	{
+		inform_int(TASK_TTY);	// 如果有按键, 立即发送硬件消息给tty
+	}
 
 	if (k_reenter != 0) /* 发生中断重入的时候, 不进行进程调度 */
 	{

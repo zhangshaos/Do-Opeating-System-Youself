@@ -19,6 +19,12 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 EXTERN	int		ticks;		/* system clock offered by 8254 chips.*/
 
+EXTERN	int	key_pressed;    /**
+			                * used for clock_handler
+			                * to wake up TASK_TTY when
+			                * a key is pressed
+			                */
+
 EXTERN	int		    disp_pos;
 EXTERN	u8		    gdt_ptr[6];	/* 0~15:Limit  16~47:Base */
 EXTERN	DESCRIPTOR	gdt[GDT_SIZE];
@@ -35,8 +41,8 @@ EXTERN	int		nr_current_console;
 extern	PROCESS		proc_table[];	/* array of PCB */
 extern	char		task_stack[];	/* stack that can be divided for all tasks */
 
-extern  TASK        task_table[];	/* array of description for all tasks */
-extern  TASK        user_proc_table[];
+extern  const TASK	task_table[];	/* array of description for all tasks */
+extern  const TASK 	user_proc_table[];
 extern	irq_handler	irq_table[];	/* array of interupt handler */
 extern	TTY		    tty_table[];    /* TTY contains public KEYBOARD(input) and private CONSOLE(ouput) */
 extern  CONSOLE     console_table[];/* display characters on screen */
@@ -45,9 +51,9 @@ extern  CONSOLE     console_table[];/* display characters on screen */
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
 EXTERN	struct super_block	super_block[NR_SUPER_BLOCK];
-extern	u8 *			    fsbuf;
+extern	u8 *		const   fsbuf;
 extern	const int		    FSBUF_SIZE;
 EXTERN	MESSAGE			    fs_msg;
 EXTERN	PROCESS             *pcaller;
 EXTERN	struct inode *		root_inode;
-extern	struct dev_drv_map	dd_map[];
+extern	const struct dev_drv_map	dd_map[];

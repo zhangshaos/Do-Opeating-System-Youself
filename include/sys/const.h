@@ -128,7 +128,7 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
 /* system call */
-#define NR_SYS_CALL	3
+#define NR_SYS_CALL	2
 
 /* ipc */
 #define SEND		1
@@ -155,6 +155,9 @@ enum msgtype {
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
+
+	/* FS & TTY */
+	SUSPEND_PROC, RESUME_PROC,
 
 	/* TTY, SYS, FS, MM, etc */
 	SYSCALL_RET,

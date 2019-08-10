@@ -24,19 +24,43 @@ bits 32
 ; ====================================================================================
 ; Never call sendrec() directly, call send_recv() instead.
 sendrec:
+	push ebp	
+	mov ebp, esp
+
+	push ebx
+	push ecx
+	push edx
+
 	mov	eax, _NR_sendrec
-	mov	ebx, [esp + 4]	; function
-	mov	ecx, [esp + 8]	; src_dest
-	mov	edx, [esp + 12]	; p_msg
+	mov	ebx, [ebp + 8]	; function
+	mov	ecx, [ebp + 12]	; src_dest
+	mov	edx, [ebp + 16]	; p_msg
 	int	INT_VECTOR_SYS_CALL
+
+	pop edx
+	pop ecx
+	pop ebx
+
+	pop ebp
 	ret
 
 ; ====================================================================================
 ;                          void printx(char* s);
 ; ====================================================================================
 printx:
+	push ebp
+	mov ebp, esp
+
+	push eax
+	push edx
+
 	mov	eax, _NR_printx
-	mov	edx, [esp + 4]
+	mov	edx, [ebp + 8]
 	int	INT_VECTOR_SYS_CALL
+
+	pop edx
+	pop eax
+
+	pop ebp
 	ret
 

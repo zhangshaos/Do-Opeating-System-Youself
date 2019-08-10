@@ -61,11 +61,11 @@ PUBLIC void task_fs()
 		case UNLINK:
 			fs_msg.RETVAL = do_unlink();
 			break;
+		case RESUME_PROC: //come from TTY to inform the process needing tty's data of unlocking 
+			src = fs_msg.PROC_NR;
+			break;
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
-		/* 	break; */
-		/* case RESUME_PROC: */
-		/* 	src = fs_msg.PROC_NR; */
 		/* 	break; */
 		/* case FORK: */
 		/* 	fs_msg.RETVAL = fs_fork(); */
@@ -83,11 +83,17 @@ PUBLIC void task_fs()
 		}
 
 		/* reply */
-		fs_msg.type = SYSCALL_RET;
-		send_recv(SEND, src, &fs_msg);
+		if (fs_msg.type != SUSPEND_PROC) //come from TTY to lock the process needing tty's data
+		{
+			// 当发起tty请求的进程P 试图write || read tty设备时,由于tty_do_read || tty_do_write 立即返回,
+			// 并发送msg: SUSPEND_PROC,所以task_fs不会回复msg给发起tty请求的进程P,
+			// 这导致P 直接处于IPC 挂起状态
+			// 直到tty 准备好了数据后, 使用tty_dev_write 发送msg: RESUME_PROC给task_fs
+			fs_msg.type = SYSCALL_RET;
+			send_recv(SEND, src, &fs_msg);
+		}
 	}
 }
-
 
 /*****************************************************************************
  *                                init_fs

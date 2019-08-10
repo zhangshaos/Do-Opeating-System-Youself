@@ -30,7 +30,7 @@ PRIVATE void	get_part_table(int drive, int sect_nr, struct part_ent * entry);
 PRIVATE void	partition(int device, int style);
 PRIVATE void	print_hdinfo(struct hd_info * hdi);
 PRIVATE int		waitfor(int mask, int val, int timeout);
-PRIVATE void	interrupt_wait();
+PUBLIC 	void		interrupt_wait();
 PRIVATE	void	hd_identify(int drive);
 PRIVATE void	print_identify_info(u16* hdinfo);
 
@@ -64,12 +64,12 @@ PUBLIC void hd_handler(int irq)
 	 *   - issues a reset, or
 	 *   - writes to the Command Register.
 	 */
-		//printf("hd_handler() wait for REG_STATUS\n");
+		//printl("hd_handler() wait for REG_STATUS\n");
 	hd_status = in_byte(REG_STATUS);
-		//printf("hd_handler() come\n");
+		//printl("hd_handler() come\n");
 	inform_int(TASK_HD);
 
-		//printf("hd_handler() over\n");
+		//printl("hd_handler() over\n");
 }
 
 
@@ -90,14 +90,14 @@ PUBLIC void task_hd()
 	{
 		send_recv(RECEIVE, ANY, &msg);
 
-			//printf("task_hd() receive msg\n");
+			//printl("task_hd() receive msg\n");
 
 		int src = msg.source;
 
 		switch (msg.type)
 		{
 		case DEV_OPEN:
-			//printf("task_hd() receive DEV_OPEN msg\n");
+			//printl("task_hd() receive DEV_OPEN msg\n");
 			hd_open(msg.DEVICE);
 			break;
 
@@ -120,7 +120,7 @@ PUBLIC void task_hd()
 			break;
 		}
 
-			//printf("task_hd() send msg back to task_fs()\n");
+			//printl("task_hd() send msg back to task_fs()\n");
 		send_recv(SEND, src, &msg);
 	}
 }
@@ -178,9 +178,9 @@ PRIVATE void hd_open(int device)
 
 	if (hd_info[drive].open_cnt++ == 0)
 	{
-		//printf("start to call partition()\n");
+// printl("DEBUG:hd_open()->partition()\n");
 		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
-		//printf("start to invoke print_hdinfo()\n");
+// printl("DEBUG:hd_open()->print_hdinfo()\n");
 		print_hdinfo(&hd_info[drive]);
 	}
 }
@@ -313,8 +313,12 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 					  drive,
 					  (sect_nr >> 24) & 0xF);
 	cmd.command	= ATA_READ;
+// printl("invoke hd_cmd_out()\n");
 	hd_cmd_out(&cmd);
-		//printf("get_part_table()-1 : call intertupt_wait()\n");
+// printl("invoke hd_cmd_out() Over\n");
+// printl("@");
+
+		//printl("get_part_table()-1 : call intertupt_wait()\n");
 		//milli_delay(10); 
 		/**
 		 * @Phenomenon:
@@ -328,14 +332,17 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 		 * exec-flow comes to msg_receive(task_hd,task_sys,msg) to get result of get_ticks()
 		 * and in msg_receive(...) the hard disk interrupt and set 
 		 */
+// printl("invoke int_wait()\n");
 	interrupt_wait();
 
-		//printf("get_part_table()-2 : get msg and call port_read()\n");
+// printl("invoke port_read()\n");
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-		//printf("get_part_table()-3 : after call port_read()\n");
+// printl("invoke memcpy()\n");
 	memcpy(entry,
 	       hdbuf + PARTITION_TABLE_OFFSET,
 	       sizeof(struct part_ent) * NR_PART_PER_DRIVE);
+
+// printl("Over\n");
 }
 
 /*****************************************************************************
@@ -358,9 +365,9 @@ PRIVATE void partition(int device, int style)
 
 	if (style == P_PRIMARY)
 	{
-			//printf("master partition() invoke get_part_table()\n");
+// printl("master partition() invoke get_part_table()\n");
 		get_part_table(drive, drive, part_tbl);
-			//printf("master partition() over get_part_table()\n");
+// printl("master partition() over get_part_table()\n");
 
 		/* 主分区个数 */
 		int nr_prim_parts = 0;
@@ -376,7 +383,7 @@ PRIVATE void partition(int device, int style)
 
 			if (part_tbl[i].sys_id == EXT_PART) /* extended */
 			{
-					//printf("partition() handle P_EXTENDED\n");
+// printl("partition() handle P_EXTENDED\n");
 				partition(device + dev_nr, P_EXTENDED);
 			}
 		}
@@ -384,7 +391,7 @@ PRIVATE void partition(int device, int style)
 		/* 主分区个数至少为1 */
 		assert(nr_prim_parts != 0);
 
-			//printf("partition() master P over.\n");
+// printl("partition() master P over.\n");
 	}
 	else if (style == P_EXTENDED) 
 	{
@@ -396,8 +403,9 @@ PRIVATE void partition(int device, int style)
 		for (int i = 0; i < NR_SUB_PER_PART; i++)
 		{
 			int dev_nr = nr_1st_sub + i;/* 0~15/16~31/32~47/48~63 */
-				//printf("extended partition() invoke get_part_table()\n");
+// printl("extended partition() invoke get_part_table()\n");
 			get_part_table(drive, s, part_tbl);
+// printl("extended partition() -> get_part_table() Over\n");
 
 			hdi->logical[dev_nr].base = s + part_tbl[0].start_sect;
 			hdi->logical[dev_nr].size = part_tbl[0].nr_sects;
@@ -408,7 +416,7 @@ PRIVATE void partition(int device, int style)
 			   in this extended partition */
 			if (part_tbl[1].sys_id == NO_PART)
 			{
-				//printf("partition() extended P over.\n");
+// printl("partition() extended P over.\n");
 				break;
 			}
 		}
@@ -564,12 +572,27 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
  * <Ring 1> Wait until a disk interrupt occurs.
  * 
  *****************************************************************************/
-PRIVATE void interrupt_wait()
+PUBLIC void interrupt_wait()
 {
 	MESSAGE msg;
-		//printf("interrupt_wait()\n");
+// printl("interrupt_wait()\n");
+// printl("@");
+// milli_delay(100);
 	send_recv(RECEIVE, INTERRUPT, &msg);
-		//printf("interrupt_wait() : receiving INT\n");
+	// @现象:
+	// *如果前面不加printl()或者milidelay()函数暂缓一点时间的话,
+	// *似乎函数就会直接hlt???
+	// *然后永远收不到msg......
+	// @解释1:
+	// *貌似是msg_receive()导致这个task_hd()直接处于RECEIVING状态,
+	// @否决1,那为什么驱动程序没有inform()?
+	// @解释2:
+	// *难道是msg_receive()函数中,控制流刚过check has_int_msg,但是task_hd还不是RECEIVING状态,
+	// *硬件中断突然来了hd_handler()->inform_int()->has_int_msg = 1
+	// *然后控制流回到msg_receive()函数中,然后将task_hd()设置为RECEIVING状态?
+	// @否决2,那为什么处于hlt状态?
+// printl("interrupt_wait() : receiving INT\n");
+printl(".");
 }
 
 /*****************************************************************************

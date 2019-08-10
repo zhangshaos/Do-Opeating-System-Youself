@@ -99,7 +99,7 @@ PUBLIC int      is_current_console(CONSOLE* p_con);
 
 /* printf.c */
 PUBLIC  int     printf(const char *fmt, ...);
-#define	printl	printf
+PUBLIC  int     printl(const char *fmt, ...);
 
 /* vsprintf.c */
 PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
@@ -130,6 +130,12 @@ PUBLIC void     schedule();
 /* syscall.asm */
 PUBLIC	int	    sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC	int	    printx(char* str);
+PUBLIC  int     write(int fd, const void *buf, int count);
+PUBLIC  int     unlink(const char * pathname);
+PUBLIC  int     read(int fd, void *buf, int count);
+PUBLIC  int     open(const char *pathname, int flags);
+PUBLIC  int     getpid();
+PUBLIC  int     close(int fd);
 
 /* kernel.asm */
 PUBLIC  void    sys_call();             /* int_handler */

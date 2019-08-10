@@ -46,7 +46,8 @@ PUBLIC int vsprintf(char *buf, const char *fmt, va_list args)
 	char	cs;
 	int	align_nr;
 
-	for (p=buf;*fmt;fmt++) {
+	for (p=buf;*fmt;fmt++) 
+	{
 		if (*fmt != '%') {
 			*p++ = *fmt;
 			continue;

@@ -28,16 +28,7 @@
 /**
  * @struct dev_drv_map fs.h "include/sys/fs.h"
  * @brief  The Device_nr.\ - Driver_nr.\ MAP.
- *
- *  \dot
- *  digraph DD_MAP {
- *    graph[rankdir=LR];
- *    node [shape=record, fontname=Helvetica];
- *    b [ label="Device Nr."];
- *    c [ label="Driver (the task)"];
- *    b -> c [ label="DD_MAP", fontcolor=blue, URL="\ref DD_MAP", arrowhead="open", style="dashed" ];
- *  }
- *  \enddot
+
  */
 struct dev_drv_map {
 	int driver_nr; /**< The proc nr.\ of the device driver. */
@@ -54,32 +45,7 @@ struct dev_drv_map {
  * @brief  The 2nd sector of the FS
  *
  * Remember to change SUPER_BLOCK_SIZE if the members are changed.
- *
- * @attention Remember to change boot/include/load.inc::SB_* if the members
- *            are changed.
- *
- * \dot
- * digraph super_block {
- *         node [shape=plaintext];
- * 
- *         sb [label=<<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="0">
- *                 <TR>
- *                         <TD HEIGHT="20" WIDTH="70" ALIGN="right" VALIGN="top" BORDER="0">Sector #&nbsp;</TD>
- *                         <TD HEIGHT="20" WIDTH="90" ALIGN="left" VALIGN="top" BORDER="0">0</TD>
- *                         <TD HEIGHT="20" WIDTH="90" ALIGN="left" VALIGN="top" BORDER="0">1</TD>
- *                         <TD HEIGHT="20" WIDTH="290" ALIGN="center" VALIGN="top" BORDER="0">...</TD>
- *                         <TD HEIGHT="20" WIDTH="10" ALIGN="right" BORDER="0"></TD>
- *                 </TR>
- *                 <TR>
- *                         <TD HEIGHT="30" WIDTH="70" ALIGN="right" BORDER="0"></TD>
- *                         <TD HEIGHT="30" WIDTH="90" ALIGN="center" BORDER="1" BGCOLOR="white">Boot Sector</TD>
- *                         <TD HEIGHT="30" WIDTH="90" ALIGN="center" BORDER="1" BGCOLOR="grey">Super Block</TD>
- *                         <TD HEIGHT="30" WIDTH="290" ALIGN="center" BORDER="1" BGCOLOR="white">...</TD>
- *                         <TD HEIGHT="30" WIDTH="10" ALIGN="right" BORDER="0"></TD>
- *                 </TR>
- *         </TABLE>>];
- * }
- * \enddot
+
  */
 struct super_block {
 	u32	magic;		  /**< Magic number */

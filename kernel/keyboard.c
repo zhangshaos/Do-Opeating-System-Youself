@@ -33,9 +33,7 @@ PRIVATE	int	num_lock;	/* Num Lock	 */
 PRIVATE	int	scroll_lock;	/* Scroll Lock	 */
 PRIVATE	int	column;
 
-PRIVATE int	caps_lock;	/* Caps Lock	 */
-PRIVATE int	num_lock;	/* Num Lock	 */
-PRIVATE int	scroll_lock;	/* Scroll Lock	 */
+
 
 PRIVATE u8		get_byte_from_kbuf();
 PRIVATE void    set_leds();
@@ -59,6 +57,8 @@ PUBLIC void keyboard_handler(int irq)
 		}
 		kb_in.count++;
 	}
+
+	key_pressed = 1;
 }
 
 
@@ -79,6 +79,8 @@ PUBLIC void init_keyboard()
 	caps_lock   = 0;
 	num_lock    = 1;
 	scroll_lock = 0;
+
+	column		= 0;
 
 	set_leds();
 
@@ -151,7 +153,8 @@ PUBLIC void keyboard_read(TTY* p_tty)
 				}
 			}
 			/* 不是PrintScreen, 此时scan_code为0xE0紧跟的那个值. */
-			if (key == 0) {
+			if (key == 0) 
+			{
 				code_with_E0 = 1;
 			}
 		}

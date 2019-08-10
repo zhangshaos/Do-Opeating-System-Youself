@@ -8,7 +8,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 PUBLIC	void*	memcpy(void* p_dst, void* p_src, int size);
 PUBLIC	void	memset(void* p_dst, char ch, int size);
-PUBLIC  char*   strcpy(char* p_dst, char* p_src);
+PUBLIC  char*   strcpy(char* p_dst, const char* p_src);
 PUBLIC	int	    strlen(const char* p_str);
 PUBLIC	int	    memcmp(const void * s1, const void *s2, int n);
 PUBLIC	int	    strcmp(const char * s1, const char *s2);

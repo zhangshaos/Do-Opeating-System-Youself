@@ -70,7 +70,7 @@ typedef struct s_proc {
 
 	struct s_proc * next_sending;		/* the next process that deliver msg to the destination of this process  */
 
-	int nr_tty;					/* just for simplifying, every Process have its TTY. */
+	// int nr_tty;					/* just for simplifying, every Process have its TTY. */
 
 	// 打开文件表
 	struct file_desc * filp[NR_FILES];

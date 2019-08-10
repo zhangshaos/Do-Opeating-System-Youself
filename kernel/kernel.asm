@@ -297,7 +297,7 @@ copr_error:
 exception:
 	call	exception_handler
 	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
-	hlt
+	jmp $
 ;======================================中断处理程序END========================================
 
 
@@ -357,16 +357,16 @@ sys_call:
         call    save	;切换到内核栈了
 
         sti
-	push	esi
+		push	esi
 
-	push	dword [p_proc_ready]
-	push	edx
-	push	ecx
-	push	ebx
+		push	dword [p_proc_ready]
+		push	edx
+		push	ecx
+		push	ebx
         call    [sys_call_table + eax * 4]
-	add	esp, 4 * 4
+		add		esp, 4 * 4
 
-	pop	esi
+		pop		esi
         mov     [esi + EAXREG - P_STACKBASE], eax
 
         cli

@@ -21,14 +21,14 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 PUBLIC	PROCESS	proc_table[NR_TASKS + NR_PROCS];
 
-PUBLIC	TASK	task_table[NR_TASKS] = {
+PUBLIC const	TASK	task_table[NR_TASKS] = {
 	{task_tty, STACK_SIZE_TTY, "TTY"},
 	{task_sys, STACK_SIZE_SYS, "SYS"},
 	{task_hd,  STACK_SIZE_HD,  "HD" },
 	{task_fs,  STACK_SIZE_FS,  "FS" }
 };
 
-PUBLIC  TASK    user_proc_table[NR_PROCS] = {
+PUBLIC 	const TASK    user_proc_table[NR_PROCS] = {
 	{TestA, STACK_SIZE_TESTA, "TestA"},
 	{TestB, STACK_SIZE_TESTB, "TestB"},
 	{TestC, STACK_SIZE_TESTC, "TestC"}
@@ -41,7 +41,7 @@ PUBLIC	CONSOLE		console_table[NR_CONSOLES];
 
 PUBLIC	irq_handler		irq_table[NR_IRQ];
 
-PUBLIC	system_call		sys_call_table[NR_SYS_CALL] = {
+PUBLIC const system_call	sys_call_table[NR_SYS_CALL] = {
 	sys_printx,
 	sys_sendrec
 	};
@@ -54,7 +54,7 @@ PUBLIC	system_call		sys_call_table[NR_SYS_CALL] = {
  *
  * Remeber to modify include/const.h if the order is changed
  *****************************************************************************/
-struct dev_drv_map dd_map[] = {
+const struct dev_drv_map dd_map[] = {
 	/* driver nr.		major device nr.
 	   ----------		---------------- */
 	{INVALID_DRIVER},	/**< 0 : Unused */
@@ -69,7 +69,7 @@ struct dev_drv_map dd_map[] = {
 /**
  * 6MB~7MB: buffer for FS
  */
-PUBLIC	u8 *		fsbuf		= (u8*)0x600000;
-PUBLIC	const int	FSBUF_SIZE	= 0x100000;
+PUBLIC 	u8 *	const	fsbuf		= (u8*)0x600000;
+PUBLIC	const int		FSBUF_SIZE	= 0x100000;
 
 

@@ -22,7 +22,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 PRIVATE void block(PROCESS* p);
 PRIVATE void unblock(PROCESS* p);
 PRIVATE int  msg_send(PROCESS* current, int dest, MESSAGE* m);
-PRIVATE int  msg_receive(PROCESS* current, int src, MESSAGE* m);
+PUBLIC int  msg_receive(PROCESS* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
 /*****************************************************************************
@@ -139,7 +139,8 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
 	if (function == RECEIVE)
 		memset(msg, 0, sizeof(MESSAGE));
 
-	switch (function) {
+	switch (function) 
+	{
 	case BOTH:
 		ret = sendrec(SEND, src_dest, msg);
 		if (ret == 0)
@@ -403,7 +404,7 @@ PRIVATE int msg_send(PROCESS* current, int dest, MESSAGE* m)
  * 
  * @return  Zero if success.
  *****************************************************************************/
-PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
+PUBLIC int msg_receive(PROCESS* current, int src, MESSAGE* m)
 {
 	PROCESS* p_who_wanna_recv = current; /**
 						  * This name is a little bit
@@ -413,12 +414,12 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 						  */
 	PROCESS* p_from = 0; /* from which the message will be fetched */
 	PROCESS* prev = 0;
-	int copyok = 0;
+	int deliver_msg_ready = 0;
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
 	if ((p_who_wanna_recv->has_int_msg) &&
-	    ((src == ANY) || (src == INTERRUPT)))
+	    ((src == ANY) || (src == INTERRUPT))) //如果receiver 有一个硬件中断需要处理
 	{
 		/* There is an interrupt needs p_who_wanna_recv's handling and
 		 * p_who_wanna_recv is ready to handle it.
@@ -454,7 +455,8 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 
 
 	/* Arrives here if no interrupt for p_who_wanna_recv. */
-	if (src == ANY) {
+	if (src == ANY) //如果receiver 在忙等
+	{
 		/* p_who_wanna_recv is ready to receive messages from
 		 * ANY proc, we'll check the sending queue and pick the
 		 * first proc in it.
@@ -463,7 +465,7 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 		{
 			p_from = p_who_wanna_recv->q_sending;
 			/* ready for p_from->hold_msg -> m */
-			copyok = 1;
+			deliver_msg_ready = 1;
 
 			assert(p_who_wanna_recv->p_flags == 0);
 			assert(p_who_wanna_recv->p_hold_msg == 0);
@@ -476,12 +478,9 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			assert(p_from->p_sendto == proc2pid(p_who_wanna_recv));
 		}
 	}
-	else if(src >= 0 && src < NR_TASKS+NR_PROCS)
+	else if(src >= 0 && src < NR_TASKS+NR_PROCS) //如果receiver 在等某一个具体的进程消息
 	{
-		/* p_who_wanna_recv wants to receive a message from
-		 * a certain proc: src.
-		 */
-		p_from = &proc_table[src];
+		p_from = proc_table + src;
 
 		if ((p_from->p_flags & SENDING) &&
 		    (p_from->p_sendto == proc2pid(p_who_wanna_recv))) 
@@ -491,7 +490,7 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			 */
 
 			/* ready for p_from->hold_msg -> m */
-			copyok = 1;
+			deliver_msg_ready = 1;
 
 			PROCESS* p = p_who_wanna_recv->q_sending;
 			assert(p); /* p_from must have been appended to the
@@ -500,7 +499,8 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			while (p) 
 			{
 				assert(p_from->p_flags & SENDING);
-				if (proc2pid(p) == src) { /* if p is the one */
+				if (proc2pid(p) == src) //if src is the first on the q_seeding queue.
+				{
 					p_from = p;
 					break;
 				}
@@ -519,26 +519,40 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			assert(p_from->p_sendto == proc2pid(p_who_wanna_recv));
 		}
 	}
-	/**
-	 * @Note:
-	 * 这里我没有处理其他src,
-	 * 例如当src = INTERRUPT时,
-	 * copyok = 0,我直接让下面的代码顺便处理了, 这样做可能会有问题, 你可以此处补充些许代码手动处理下.
-	 */
+	else // src == INTERRUPT, receiver 在等待中断
+	{
+		assert(src == INTERRUPT);
+		assert(p_who_wanna_recv->p_flags == 0);
 
-	if (copyok) 
+		p_who_wanna_recv->p_flags 		|=	RECEIVING;
+		p_who_wanna_recv->p_hold_msg 	=	m;
+		p_who_wanna_recv->p_recvfrom	=	src;
+
+		block(p_who_wanna_recv);
+		// 这里设计得还是有问题,因为硬件中断可能随时发生
+		// 如果在block()调用前,突然硬件中断修改了p_who_wanna_recv->p_flags,会导致系统直接assert失败而hlt
+		// 必须要想一个办法, 解决边界问题......
+		// ......
+
+		return 0;
+	}
+
+
+	if (deliver_msg_ready) 
 	{
 		/* It's determined from which proc the message will
 		 * be copied. Note that this proc must have been
 		 * waiting for this moment in the queue, so we should
 		 * remove it from the queue.
 		 */
-		if (p_from == p_who_wanna_recv->q_sending) { /* the 1st one */
+		if (p_from == p_who_wanna_recv->q_sending) /* the 1st one */
+		{
 			assert(prev == 0);
 			p_who_wanna_recv->q_sending = p_from->next_sending;
 			p_from->next_sending = 0;
 		}
-		else {
+		else 
+		{
 			assert(prev);
 			prev->next_sending = p_from->next_sending;
 			p_from->next_sending = 0;
@@ -551,18 +565,28 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 					va2la(proc2pid(p_from), p_from->p_hold_msg),
 			  		sizeof(MESSAGE));
 
-		p_from->p_hold_msg = 0;
-		p_from->p_sendto = NO_TASK;
-		p_from->p_flags &= ~SENDING;
+		p_from->p_hold_msg 	= 0;
+		p_from->p_sendto 	= NO_TASK;
+		p_from->p_flags 	&= ~SENDING;
 		unblock(p_from);
 	}
 	else 
 	{
 		/**
+		 * @ WARNING
+		 * 这部分IPC设计有问题,如果进程等待的是硬件中断
+		 * 那么必须要考虑中断可能时刻发生!
+		 * 所以必须针对INTERRUPT重新设计IPC
+		 * (我觉得把中断和IPC分开设计要好得多...
+		 * Linux说得没错,IPC看起来非常完美,实际上实现完美的IPC非常困难)
+		 */
+
+		/**
 		 * nobody's sending any msg.
 		 * so, make this process in RECEIVING status 
 		 * and lock it.
 		 */
+
 		p_who_wanna_recv->p_flags |= RECEIVING;
 
 		p_who_wanna_recv->p_hold_msg = m;
@@ -571,13 +595,17 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 
 		block(p_who_wanna_recv);
 
+		/**
+		 * what about coming here with interrupt occuring,
+		 * then, p_flags will change
+		 */
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_hold_msg != 0);
 		assert(p_who_wanna_recv->p_recvfrom != NO_TASK);
 		assert(p_who_wanna_recv->p_sendto == NO_TASK);
-		//printf("receiver:%d, msg_from:%d\n",current-proc_table,src);
+		//printl("receiver:%d, msg_from:%d\n",current-proc_table,src);
 		/**@ Amazing!
-		 * when cotrol flow run in pritf(), a HD interrupt happen
+		 * when cotrol flow run in printf(), a HD interrupt happen
 		 * and set has_int_msg = 1 !
 		 * But, if control flow come to HD INT handler and invoke inform_int(),
 		 * why inform_int won't giver msg to hd_task() and set has_int_msg = 0 directly?
@@ -593,7 +621,7 @@ PRIVATE int msg_receive(PROCESS* current, int src, MESSAGE* m)
 		 * @ Final,
 		 * So I think this assert isn't necessary !
 		 */
-		//assert(p_who_wanna_recv->has_int_msg == 0);
+		// assert(p_who_wanna_recv->has_int_msg == 0);
 	}
 
 	return 0;
@@ -683,7 +711,7 @@ PUBLIC void dump_proc(PROCESS* p)
 	sprintf(info, "p_flags: 0x%x.  ", p->p_flags); disp_color_str(info, text_color);
 	sprintf(info, "p_recvfrom: 0x%x.  ", p->p_recvfrom); disp_color_str(info, text_color);
 	sprintf(info, "p_sendto: 0x%x.  ", p->p_sendto); disp_color_str(info, text_color);
-	sprintf(info, "nr_tty: 0x%x.  ", p->nr_tty); disp_color_str(info, text_color);
+	// sprintf(info, "nr_tty: 0x%x.  ", p->nr_tty); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	sprintf(info, "has_int_msg: 0x%x.  ", p->has_int_msg); disp_color_str(info, text_color);
 }
