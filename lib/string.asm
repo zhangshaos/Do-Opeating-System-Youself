@@ -59,7 +59,7 @@ memset:
 	push	ebp
 	mov	ebp, esp
 
-	push	esi
+	push	edx
 	push	edi
 	push	ecx
 
@@ -79,7 +79,7 @@ memset:
 
 	pop	ecx
 	pop	edi
-	pop	esi
+	pop	edx
 	pop	ebp
 
 	ret			; 函数结束，返回
