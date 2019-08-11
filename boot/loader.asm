@@ -186,6 +186,43 @@ LABEL_FILE_LOADED:
 
 	call	KillMotor		; 关闭软驱马达
 
+;;; 	;; 取硬盘信息
+;;; 	xor	eax, eax
+;;; 	mov	ah, 08h		; Code for drive parameters
+;;; 	mov	dx, 80h		; hard drive
+;;; 	int	0x13
+;;; 	jb	.hderr		; No such drive?
+;;; 	;; cylinder number
+;;; 	xor	ax, ax		; ax <- 0
+;;; 	mov	ah, cl		; ax <- cl
+;;; 	shr	ah, 6
+;;; 	and	ah, 3	   	; cl bits 7-6: high two bits of maximum cylinder number
+;;; 	mov	al, ch		; CH = low eight bits of maximum cylinder number
+;;; 	;; sector number
+;;; 	and	cl, 3Fh		; cl bits 5-0: max sector number (1-origin)
+;;; 	;; head number
+;;; 	inc	dh		; dh = 1 + max head number (0-origin)
+;;; 	mov	[_dwNrHead], dh
+;;; 	mov	[_dwNrSector], cl
+;;; 	mov	[_dwNrCylinder], ax
+;;; 	jmp	.hdok
+;;; .hderr:
+;;; 	mov	dword [_dwNrHead], 0FFFFh
+;;; .hdok:
+	;; 将硬盘引导扇区内容读入内存 0500h 处
+	xor     ax, ax
+	mov     es, ax
+	mov     ax, 0201h       ; AH = 02
+	                        ; AL = number of sectors to read (must be nonzero) 
+	mov     cx, 1           ; CH = low eight bits of cylinder number
+	                        ; CL = sector number 1-63 (bits 0-5)
+	                        ;      high two bits of cylinder (bits 6-7, hard disk only)
+	mov     dx, 80h         ; DH = head number
+	                        ; DL = drive number (bit 7 set for hard disk)
+	mov     bx, 500h        ; ES:BX -> data buffer
+	int     13h
+	;; 硬盘操作完毕
+
 	mov	dh, 2			; "Ready."
 	call	DispStrRealMode		; 显示字符串
 

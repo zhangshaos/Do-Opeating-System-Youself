@@ -8,6 +8,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 #include"tty.h"
 #include"proc.h"
+#include"stdio.h"
 
 /* kliba.asm */
 PUBLIC void	    out_byte(u16 port, u8 value);
@@ -24,10 +25,14 @@ PUBLIC void	glitter(int row, int col);  /* =======> 这是什么函数? */
 
 
 /* protect.c */
-PUBLIC void	    init_prot();
-PUBLIC u32	    seg2phys(u16 seg);
+PUBLIC void	init_prot();
+PUBLIC u32	seg2linear(u16 seg);
+PUBLIC void	init_desc(struct descriptor * p_desc,
+			  u32 base, u32 limit, u16 attribute);
 
 /* klib.c */
+PUBLIC void	get_boot_params(struct boot_params * pbp);
+PUBLIC int	get_kernel_map(unsigned int * b, unsigned int * l);
 PUBLIC char *   itoa(char * str, int num);
 PUBLIC void     disp_int(int input);
 
@@ -35,6 +40,8 @@ PUBLIC void     disp_int(int input);
 PUBLIC void     restart();
 
 /* main.c */
+
+PUBLIC void Init();
 PUBLIC int      get_ticks();
 PUBLIC void     TestA();
 PUBLIC void     TestB();
@@ -61,8 +68,9 @@ PUBLIC void     init_keyboard();
 PUBLIC void     keyboard_read(TTY* p_tty);
 
 /* tty.c */
-PUBLIC void     task_tty();
-PUBLIC void     in_process(TTY* p_tty, u32 key);
+PUBLIC void task_tty();
+PUBLIC void in_process(TTY* p_tty, u32 key);
+PUBLIC void dump_tty_buf();	/* for debug only */
 
 /* systask.c */
 PUBLIC void     task_sys();
@@ -90,20 +98,25 @@ PUBLIC int		do_stat();
 PUBLIC int		strip_path(char * filename, const char * pathname, struct inode** ppinode);
 PUBLIC int		search_file(char * path);
 
+
+/* mm/main.c */
+PUBLIC void		task_mm();
+PUBLIC int		alloc_mem(int pid, int memsize);
+PUBLIC int		free_mem(int pid);
+
+/* mm/forkexit.c */
+PUBLIC int		do_fork();
+PUBLIC void		do_exit(int status);
+PUBLIC void		do_wait();
+
+/* mm/exec.c */
+/* PUBLIC int		do_exec(); */
 /* console.c */
 PUBLIC void     out_char(CONSOLE* p_con, char ch);
 PUBLIC void     scroll_screen(CONSOLE* p_con, int direction);
 PUBLIC void     init_screen(TTY* p_tty);
 PUBLIC void     select_console(int nr_console);
 PUBLIC int      is_current_console(CONSOLE* p_con);
-
-/* printf.c */
-PUBLIC  int     printf(const char *fmt, ...);
-PUBLIC  int     printl(const char *fmt, ...);
-
-/* vsprintf.c */
-PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
-PUBLIC	int	    sprintf(char *buf, const char *fmt, ...);
 
 /* proc.c */
 PUBLIC	void	schedule();

@@ -18,11 +18,12 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "global.h"
 #include "proto.h"
 #include "global.h"
+#include "stdio.h"
 
 PRIVATE void block(PROCESS* p);
 PRIVATE void unblock(PROCESS* p);
 PRIVATE int  msg_send(PROCESS* current, int dest, MESSAGE* m);
-PUBLIC int  msg_receive(PROCESS* current, int src, MESSAGE* m);
+PUBLIC  int  msg_receive(PROCESS* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
 /*****************************************************************************
@@ -37,13 +38,9 @@ PUBLIC void schedule()
 	PROCESS* p;
 	int	 greatest_ticks = 0;
 
-	while (0 == greatest_ticks) 
-	{
-		/* 寻找剩余ticks(优先级)最多的进程 */
-		for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) 
-		{
-			if(0 == p->p_flags)
-			{
+	while (!greatest_ticks) {
+		for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
+			if (p->p_flags == 0) {
 				if (p->ticks > greatest_ticks) {
 					greatest_ticks = p->ticks;
 					p_proc_ready = p;
@@ -51,12 +48,9 @@ PUBLIC void schedule()
 			}
 		}
 
-		/* 如果所有进程都结束了, 重新跑一遍 */
-		if (0 == greatest_ticks) 
-		{
-			for (p = proc_table; p < proc_table+NR_TASKS+NR_PROCS; p++) {
-				if(0 == p->p_flags)
-				{
+		if (!greatest_ticks) {
+			for (p = &FIRST_PROC; p <= &LAST_PROC; p++) {
+				if (p->p_flags == 0) {
 					p->ticks = p->priority;
 				}
 			}
@@ -100,11 +94,13 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p)
 	 * by `send_recv()'.
 	 */
 	if (function == SEND) {
+		// printl("[%d->%d]",p-proc_table,src_dest);
 		ret = msg_send(p, src_dest, m);
 		if (ret != 0)
 			return ret;
 	}
 	else if (function == RECEIVE) {
+		// printl("[%d<-%d]",p-proc_table,src_dest);
 		ret = msg_receive(p, src_dest, m);
 		if (ret != 0)
 			return ret;
@@ -142,12 +138,17 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
 	switch (function) 
 	{
 	case BOTH:
+		// printl("[%d<>%d]",p_proc_ready-proc_table,src_dest);
 		ret = sendrec(SEND, src_dest, msg);
 		if (ret == 0)
 			ret = sendrec(RECEIVE, src_dest, msg);
 		break;
 	case SEND:
 	case RECEIVE:
+		// if(function == SEND)
+		// 	printl("[%d>%d]",p_proc_ready-proc_table,src_dest);
+		// else
+		// 	printl("[%d<%d]",p_proc_ready-proc_table,src_dest);
 		ret = sendrec(function, src_dest, msg);
 		break;
 	default:
@@ -195,7 +196,7 @@ PUBLIC void* va2la(int pid, void* va)
 	u32 seg_base = ldt_seg_linear(p, INDEX_LDT_RW);
 	u32 la = seg_base + (u32)va;
 
-	if (pid < NR_TASKS + NR_PROCS) {
+	if (pid < NR_TASKS + NR_NATIVE_PROCS) {
 		assert(la == (u32)va);
 	}
 
@@ -478,7 +479,7 @@ PUBLIC int msg_receive(PROCESS* current, int src, MESSAGE* m)
 			assert(p_from->p_sendto == proc2pid(p_who_wanna_recv));
 		}
 	}
-	else if(src >= 0 && src < NR_TASKS+NR_PROCS) //如果receiver 在等某一个具体的进程消息
+	else if(src >= 0 && src < NR_TASKS+NR_NATIVE_PROCS+NR_PROCS) //如果receiver 在等某一个具体的进程消息
 	{
 		p_from = proc_table + src;
 
@@ -705,7 +706,7 @@ PUBLIC void dump_proc(PROCESS* p)
 	sprintf(info, "ldt_sel: 0x%x.  ", p->ldt_sel); disp_color_str(info, text_color);
 	sprintf(info, "ticks: 0x%x.  ", p->ticks); disp_color_str(info, text_color);
 	sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color);
-	sprintf(info, "pid: 0x%x.  ", p->pid); disp_color_str(info, text_color);
+	// sprintf(info, "pid: 0x%x.  ", p->pid); disp_color_str(info, text_color);
 	sprintf(info, "name: %s.  ", p->name); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	sprintf(info, "p_flags: 0x%x.  ", p->p_flags); disp_color_str(info, text_color);

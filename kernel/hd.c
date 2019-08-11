@@ -18,6 +18,7 @@
 #include "global.h"
 #include "proto.h"
 #include "hd.h"
+#include "stdio.h"
 
 
 PRIVATE void	init_hd();

@@ -13,7 +13,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 
 /* 存储段描述符/系统段描述符 */
-typedef struct s_descriptor		/* 共 8 个字节 */
+typedef struct descriptor		/* 共 8 个字节 */
 {
 	u16	limit_low;		/* Limit */
 	u16	base_low;		/* Base */
@@ -23,8 +23,13 @@ typedef struct s_descriptor		/* 共 8 个字节 */
 	u8	base_high;		/* Base */
 }DESCRIPTOR;
 
+#define	reassembly(high, high_shift, mid, mid_shift, low)	\
+	(((high) << (high_shift)) +				\
+	 ((mid)  << (mid_shift)) +				\
+	 (low))
+
 /* 门描述符 */
-typedef struct s_gate
+typedef struct gate
 {
 	u16	offset_low;	/* Offset Low */
 	u16	selector;	/* Selector */
@@ -37,7 +42,7 @@ typedef struct s_gate
 	u16	offset_high;	/* Offset High */
 }GATE;
 
-typedef struct s_tss {
+typedef struct tss {
 	u32	backlink;
 	u32	esp0;		/* stack pointer to use during interrupt */
 	u32	ss0;		/*   "   segment  "  "    "        "     */
@@ -95,8 +100,9 @@ typedef struct s_tss {
 #define INDEX_LDT_RW            1
 
 /* 描述符类型值说明 */
-#define	DA_32			0x4000	/* 32 位段				 */
-#define	DA_LIMIT_4K		0x8000	/* 段界限粒度为 4K 字节	   */
+#define	DA_32			0x4000	/* 32 位段				*/
+#define	DA_LIMIT_4K		0x8000	/* 段界限粒度为 4K 字节			*/
+#define	LIMIT_4K_SHIFT		  12
 #define	DA_DPL0			0x00	/* DPL = 0				*/
 #define	DA_DPL1			0x20	/* DPL = 1				*/
 #define	DA_DPL2			0x40	/* DPL = 2				*/
@@ -158,5 +164,7 @@ typedef struct s_tss {
 /* 线性地址 → 物理地址 */
 #define vir2phys(seg_base, vir)	(u32)(((u32)seg_base) + (u32)(vir))
 
+/* seg:off -> linear addr */
+#define makelinear(seg,off) (u32)(((u32)(seg2linear(seg))) + (u32)(off))
 
 #endif /* _ORANGES_PROTECT_H_ */

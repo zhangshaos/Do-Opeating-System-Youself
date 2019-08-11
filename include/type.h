@@ -68,5 +68,26 @@ typedef struct {
 	} u;
 } MESSAGE;
 
+/* i have no idea of where to put this struct, so i put it here */
+struct boot_params {
+	int		mem_size;	/* memory size */
+	unsigned char *	kernel_file;	/* addr of kernel file */
+};
+
+
+/**
+ * @struct time
+ * @brief  RTC time from CMOS.
+ */
+struct time {
+	u32 year;
+	u32 month;
+	u32 day;
+	u32 hour;
+	u32 minute;
+	u32 second;
+};
+
+#define  BCD_TO_DEC(x)      ( (x >> 4) * 10 + (x & 0x0f) )
 
 #endif /* _ORANGES_TYPE_H_ */

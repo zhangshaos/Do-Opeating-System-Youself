@@ -31,6 +31,9 @@ boot: a
 # where do we send log messages? 
 # log: bochsout.txt 
 
+# gui
+# display_library: x, options=gui_debug
+# magic_break: enabled=1
 
 # disable the mouse, since DLX is text only 
 mouse: enabled=0 
