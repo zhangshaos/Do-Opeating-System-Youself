@@ -20,6 +20,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "protect.h"
 #include "tty.h"
 #include "console.h"
+#include "keyboard.h"
 
 
 
@@ -60,6 +61,9 @@ extern	u8 *			mmbuf;
 extern	const int		MMBUF_SIZE;
 EXTERN	int				memory_size;
 
+
+// 键盘扫描码缓冲区
+extern KB_INPUT	KB_CODE_INBUF;
 
 /* FS */
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];

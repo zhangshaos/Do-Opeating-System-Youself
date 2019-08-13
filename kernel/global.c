@@ -44,6 +44,11 @@ PUBLIC const	TASK	user_proc_table[NR_NATIVE_PROCS] = {
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
+
+// 键盘扫描码缓冲区
+PUBLIC KB_INPUT	KB_CODE_INBUF;
+
+
 PUBLIC	TTY			tty_table[NR_CONSOLES];
 PUBLIC	CONSOLE		console_table[NR_CONSOLES];
 

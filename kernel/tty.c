@@ -78,15 +78,24 @@ PUBLIC void task_tty()
 
 	while (1) 
 	{
+		// 轮训各TTY,响应用户键盘
+		// @1:回显用户输入
+		// @2:将键盘输入数据输送给读取键盘输入的进程P
 		for (p_tty = TTY_FIRST; p_tty < TTY_END; p_tty++) 
 		{
-			LOG_RECORD(" tty-%d:dev_read&write ",p_tty-tty_table);
-			do {
-				tty_dev_read(p_tty);
-				tty_dev_write(p_tty);
-			} while (p_tty->inbuf_count);
+			// LOG_RECORD(" tty-%d:dev_read&write ",p_tty-tty_table);
+			// do {
+				tty_dev_read(p_tty);	//将键盘扫描码(没有扫描码时忙等出现)转为key并输入盘p_tty的输入缓冲区
+				LOG_RECORD("\ntty%d:scan code transfered\n",p_tty-tty_table);
+				tty_dev_write(p_tty);	//将p_tty的缓冲区数据写入进程P中	//没有进程P 会发生什么?
+			// } while (p_tty->inbuf_count);
+			// 为什么要使用do-while? 不使用循环就行把.
+			// tty_dev_write()调用后,inbuf_count = 0;
 		}
 
+		// 接受直接读写tty的msg
+		// @1:显示进程输出屏幕的数据
+		// @2:让读取键盘输入的进程p 等用户键入数据完成.
 		send_recv(RECEIVE, ANY, &msg);
 
 		int src = msg.source;
@@ -96,17 +105,17 @@ PUBLIC void task_tty()
 
 		switch (msg.type) 
 		{
-		case DEV_OPEN:
+		case DEV_OPEN:	//do nothing, just return.
 			reset_msg(&msg);
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 			break;
 		case DEV_READ:
-			LOG_RECORD(" tty-%d_do_r ",ptty-tty_table);
+			// 告诉fs系统,挂起read tty 的进程P,等tty读完键盘...
 			tty_do_read(ptty, &msg);
 			break;
 		case DEV_WRITE:
-			LOG_RECORD(" tty-%d_do_w ",ptty-tty_table);
+			// 将进程P 传送过来的字符,显示出来.
 			tty_do_write(ptty, &msg);
 			break;
 		case HARD_INT:
@@ -114,7 +123,7 @@ PUBLIC void task_tty()
 			 * waked up by clock_handler -- a key was just pressed
 			 * @see clock_handler() inform_int()
 			 */
-			// LOG_RECORD("hard int to tty\n");
+			LOG_RECORD("\nhard int to tty\n");
 			key_pressed = 0;
 			continue;	//继续循环tty_dev_read && tty_dev_write
 		default:
@@ -140,10 +149,9 @@ PRIVATE void init_tty(TTY* p_tty)
  *                                in_process
  *****************************************************************************/
 /**
- * keyboard_read() will invoke this routine after having recognized a key press.
- * 
- * @param tty  The key press is for whom.
- * @param key  The integer key with metadata.
+ * 解析自定义的键key:
+ * 如果是可打印字符,则将其放在 @param:p_tty 的打印缓冲中,等待打印
+ * 如果是功能按键,则执行相应功能
  *****************************************************************************/
 PUBLIC void in_process(TTY* p_tty, u32 key)
 {
@@ -223,33 +231,26 @@ PRIVATE void put_key(TTY* p_tty, u32 key)
 
 
 /*****************************************************************************
- *                                tty_dev_read
- *****************************************************************************/
-/**
- * Get chars from the keyboard buffer if the TTY::console is the `current'
- * console.
- *
- * @see keyboard_read()
- * 
- * @param tty  Ptr to TTY.
+ 				将键盘扫描码转为key并输入盘p_tty的输入缓冲区
  *****************************************************************************/
 PRIVATE void tty_dev_read(TTY* tty)
 {
 	if (is_current_console(tty->p_console))
+	{
+	LOG_CALLS(p_proc_ready,"tty_dev_read");
 		keyboard_read(tty);
+	// LOG_RECORD("tty-buf:%s",tty->p_inbuf_head);
+	LOG_RETS(p_proc_ready,"tty_dev_read");
+	}
 }
 
 
 /*****************************************************************************
- *                                tty_dev_write
- *****************************************************************************/
-/**
- * Echo the char just pressed and transfer it to the waiting process.
- * 
- * @param tty   Ptr to a TTY struct.
+ 				将p_tty的缓冲区数据写入进程P中
  *****************************************************************************/
 PRIVATE void tty_dev_write(TTY* tty)
 {
+	// 处理tty缓冲区中的所有字符
 	while (tty->inbuf_count) 
 	{
 		char ch = *(tty->p_inbuf_tail);
@@ -260,28 +261,36 @@ PRIVATE void tty_dev_write(TTY* tty)
 		{
 			if (ch >= ' ' && ch <= '~') //如果是可打印的字符
 			{
-				out_char(tty->p_console, ch);
+				out_char(tty->p_console, ch); //显示字符
+
 				// 将ch 送入进程P 的缓冲区中
 				void * p = tty->tty_req_buf + tty->tty_trans_cnt;
 				memcpy(p, (void *)va2la(TASK_TTY, &ch), 1);
+			LOG_RECORD("\ntty send %c to %s's buf\n",ch,proc_table[tty->tty_procnr].name);
 				tty->tty_trans_cnt++;
 				tty->tty_left_cnt--;
 			}
 			else if (ch == '\b' && tty->tty_trans_cnt) 
 			{
 				out_char(tty->p_console, ch);
+
 				// ch 不送入进程P 的缓冲区中
+				// 
 				tty->tty_trans_cnt--;
 				tty->tty_left_cnt++;
 			}
 
-			if (ch == '\n' || tty->tty_left_cnt == 0) //一次'写'完成了,恢复进程P
+			// 一次"write"完成,一次的数据已经写入进程P 的缓冲中
+			if (ch == '\n' || tty->tty_left_cnt == 0)
 			{
 				out_char(tty->p_console, '\n');
+
+				// 数据传输完毕,恢复read进程P 
 				MESSAGE msg;
 				msg.type 	= RESUME_PROC;
 				msg.PROC_NR = tty->tty_procnr;
 				msg.CNT 	= tty->tty_trans_cnt;
+				LOG_RECORD("\nOver:%s read data:%s\n", proc_table[tty->tty_procnr].name , (char *)(tty->tty_req_buf) );
 				send_recv(SEND, tty->tty_caller, &msg);
 				tty->tty_left_cnt = 0;
 			}
@@ -330,6 +339,8 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 {
 	char 		buf[TTY_OUT_BUF_LEN];
+	// 为什么要用缓冲区域?
+
 	char * p 	= (char*)va2la(msg->PROC_NR, msg->BUF);
 	int  count	= msg->CNT;
 

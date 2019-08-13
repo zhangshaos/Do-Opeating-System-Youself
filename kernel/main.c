@@ -332,11 +332,28 @@ void TestA()
  *======================================================================*/
 void TestB()
 {
-	for(;;);
+	int stdin = open("/dev_tty1",O_RDWR);
+	assert(stdin == 0);
+	int stdout = open("/dev_tty1",O_RDWR);
+	assert(stdout == 1);
+
+	char buf[128] = { '\0' };
+
+	while (1)
+	{
+		write(stdout,"$ ",2);
+		int ret = read(stdin,buf,127);
+		buf[ret] = '\0';
+
+		write(stdout,"BACK:",5);
+		write(stdout,buf,ret);
+		write(stdout,"\n",1);
+	}
+	
 }
 
 /*======================================================================*
-                               TestB
+                               TestC
  *======================================================================*/
 void TestC()
 {

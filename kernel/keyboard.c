@@ -19,7 +19,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "keymap.h"
 #include "proto.h"
 
-PRIVATE KB_INPUT	kb_in;
+
 
 PRIVATE	int	code_with_E0;
 PRIVATE	int	shift_l;	/* l shift state */
@@ -43,19 +43,19 @@ PRIVATE void    kb_ack();
 /*======================================================================*
                             keyboard_handler
 	=================================================================
-							键盘中断处理程序
+				键盘中断处理程序,将扫描嘛写入扫描码缓冲区中
  *======================================================================*/
 PUBLIC void keyboard_handler(int irq)
 {
 	u8 scan_code = in_byte(KB_DATA);
 
-	if (kb_in.count < KB_IN_BYTES) {
-		*(kb_in.p_head) = scan_code;
-		kb_in.p_head++;
-		if (kb_in.p_head == kb_in.buf + KB_IN_BYTES) {
-			kb_in.p_head = kb_in.buf;
+	if (KB_CODE_INBUF.count < KB_IN_BYTES) {
+		*(KB_CODE_INBUF.p_head) = scan_code;
+		KB_CODE_INBUF.p_head++;
+		if (KB_CODE_INBUF.p_head == KB_CODE_INBUF.buf + KB_IN_BYTES) {
+			KB_CODE_INBUF.p_head = KB_CODE_INBUF.buf;
 		}
-		kb_in.count++;
+		KB_CODE_INBUF.count++;
 	}
 
 	key_pressed = 1;
@@ -69,8 +69,8 @@ PUBLIC void keyboard_handler(int irq)
 *======================================================================*/
 PUBLIC void init_keyboard()
 {
-	kb_in.count = 0;
-	kb_in.p_head = kb_in.p_tail = kb_in.buf;
+	KB_CODE_INBUF.count = 0;
+	KB_CODE_INBUF.p_head = KB_CODE_INBUF.p_tail = KB_CODE_INBUF.buf;
 
 	shift_l	= shift_r = 0;
 	alt_l	= alt_r   = 0;
@@ -91,6 +91,9 @@ PUBLIC void init_keyboard()
 
 /*======================================================================*
                            keyboard_read
+	从扫描码缓冲区中解析扫描码, 将其转化位自定义可识别的键key(包含功能码和字符)
+	最后, 调用in_process():
+						完成功能码的功能 && 将字符写入对应tty的缓冲中
 *======================================================================*/
 PUBLIC void keyboard_read(TTY* p_tty)
 {
@@ -102,11 +105,11 @@ PUBLIC void keyboard_read(TTY* p_tty)
 			 */
 	u32*	keyrow;	/* 指向 keymap[] 的某一行 */
 
-	if(kb_in.count > 0)
+	if(KB_CODE_INBUF.count > 0)
 	{
 		code_with_E0 = 0;
 
-		scan_code = get_byte_from_kbuf();	/* 获取扫描码 */
+		scan_code = get_byte_from_kbuf();	/* 获取扫描码, 没有扫描码时忙等 */
 
 		/* 下面开始解析扫描码,
 		先判断两个扫描码-make长度>2的特殊按键 */
@@ -326,21 +329,22 @@ PUBLIC void keyboard_read(TTY* p_tty)
 
 /*======================================================================*
 			    get_byte_from_kbuf
+				从键盘扫描码缓冲中,取一个扫描码
  *======================================================================*/
-PRIVATE u8 get_byte_from_kbuf()       /* 从键盘缓冲区中读取下一个字节 */
+PRIVATE u8 get_byte_from_kbuf()
 {
         u8 scan_code;
 
-        while (kb_in.count <= 0) {}   /* 等待下一个字节到来 */
+        while (KB_CODE_INBUF.count <= 0) {}   /* 等待下一个字节到来 */
 
         disable_int();	/* forbid interrupt */
-        scan_code = *(kb_in.p_tail);
-        kb_in.p_tail++;
-        if (kb_in.p_tail == kb_in.buf + KB_IN_BYTES) 
+        scan_code = *(KB_CODE_INBUF.p_tail);
+        KB_CODE_INBUF.p_tail++;
+        if (KB_CODE_INBUF.p_tail == KB_CODE_INBUF.buf + KB_IN_BYTES) 
 		{
-                kb_in.p_tail = kb_in.buf;
+                KB_CODE_INBUF.p_tail = KB_CODE_INBUF.buf;
         }
-        kb_in.count--;
+        KB_CODE_INBUF.count--;
         enable_int();	/* resume interrupt */
 
 	return scan_code;
