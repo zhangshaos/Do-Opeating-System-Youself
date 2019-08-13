@@ -25,8 +25,8 @@ typedef struct s_tty
 	int		inbuf_count;		/* 显示缓冲区中已经填充了多少 */
 
 	int		tty_caller;	// 向tty发送msg的进程,通常是task_fs
-	int		tty_procnr;	// 请求数据的进程P
-	void*	tty_req_buf;	// 进程P 用来存放读入字符的缓冲区的线性地址
+	int		tty_procnr;	// 请求读取tty数据的进程P
+	void*	tty_req_buf;	// 进程P 用来存放读入的tty字符的缓冲区的线性地址
 	int		tty_left_cnt;	// 进程P 想要读入的字符数
 	int		tty_trans_cnt;	// tty已经向进程P 传送的字符数
 

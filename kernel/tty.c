@@ -87,7 +87,7 @@ PUBLIC void task_tty()
 			// do {
 				tty_dev_read(p_tty);	//将键盘扫描码(没有扫描码时忙等出现)转为key并输入盘p_tty的输入缓冲区
 				LOG_RECORD("\ntty%d:scan code transfered\n",p_tty-tty_table);
-				tty_dev_write(p_tty);	//将p_tty的缓冲区数据写入进程P中	//没有进程P 会发生什么?
+				tty_dev_write(p_tty);	//将p_tty的缓冲区数据写入读取tty数据进程P中	//没有进程P 会发生什么?
 			// } while (p_tty->inbuf_count);
 			// 为什么要使用do-while? 不使用循环就行把.
 			// tty_dev_write()调用后,inbuf_count = 0;
@@ -110,12 +110,13 @@ PUBLIC void task_tty()
 			msg.type = SYSCALL_RET;
 			send_recv(SEND, src, &msg);
 			break;
-		case DEV_READ:
-			// 告诉fs系统,挂起read tty 的进程P,等tty读完键盘...
+		case DEV_READ:	//其他进程想要读tty设备(读取键盘)
+			// @1:使用msg 填充struct tty 中关于读取数据的进程P 的数据结构
+			// @2:告诉fs系统,挂起read tty 的进程P,等tty读完键盘...
 			tty_do_read(ptty, &msg);
 			break;
-		case DEV_WRITE:
-			// 将进程P 传送过来的字符,显示出来.
+		case DEV_WRITE:	//其他进程想要读写tty设备(输出到屏幕)
+			// 将msg 传送过来的字符,显示出来.
 			tty_do_write(ptty, &msg);
 			break;
 		case HARD_INT:
@@ -141,7 +142,12 @@ PRIVATE void init_tty(TTY* p_tty)
 	p_tty->inbuf_count = 0;
 	p_tty->p_inbuf_head = p_tty->p_inbuf_tail = p_tty->in_buf;
 
-	/* 初始化屏幕 */
+	p_tty->tty_caller = p_tty->tty_procnr = NO_TASK;
+	p_tty->tty_req_buf = (void*)0;
+	p_tty->tty_left_cnt = 0;
+	p_tty->tty_trans_cnt = 0;
+
+	/* 初始化屏幕(console) */
 	init_screen(p_tty);
 }
 
@@ -253,11 +259,15 @@ PRIVATE void tty_dev_write(TTY* tty)
 	// 处理tty缓冲区中的所有字符
 	while (tty->inbuf_count) 
 	{
+		// if(tty->tty_procnr != NO_TASK)
+		// 如果没有进程 想要读取tty数据,则溜溜溜...
+
 		char ch = *(tty->p_inbuf_tail);
 		tty->p_inbuf_tail = (tty->p_inbuf_tail - tty->in_buf + 1) % TTY_IN_BYTES + tty->in_buf;
 		tty->inbuf_count--;
 
-		if (tty->tty_left_cnt) 
+		// 如果进程P 还需要数据
+		if (tty->tty_left_cnt && tty->tty_procnr != NO_TASK) 
 		{
 			if (ch >= ' ' && ch <= '~') //如果是可打印的字符
 			{
@@ -339,7 +349,7 @@ PRIVATE void tty_do_read(TTY* tty, MESSAGE* msg)
 PRIVATE void tty_do_write(TTY* tty, MESSAGE* msg)
 {
 	char 		buf[TTY_OUT_BUF_LEN];
-	// 为什么要用缓冲区域?
+	// 为什么要用缓冲区域? 不可以直接读写吗?
 
 	char * p 	= (char*)va2la(msg->PROC_NR, msg->BUF);
 	int  count	= msg->CNT;
