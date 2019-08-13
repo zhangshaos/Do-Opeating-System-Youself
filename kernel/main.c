@@ -18,6 +18,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "global.h"
 #include "proto.h"
 #include "stdio.h"
+#include "log.h"
 
 /*======================================================================*
                             kernel_main
@@ -37,6 +38,7 @@ PUBLIC int kernel_main()
 
 	char * stk = task_stack + STACK_SIZE_TOTAL;
 
+	// 填充 PCB
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
 		if (i >= NR_TASKS + NR_NATIVE_PROCS) {
 			p->p_flags = FREE_SLOT;
@@ -44,18 +46,18 @@ PUBLIC int kernel_main()
 		}
 
 	        if (i < NR_TASKS) {     /* TASK */
-                        t	= task_table + i;
-                        priv	= PRIVILEGE_TASK;
-                        rpl     = RPL_TASK;
-                        eflags  = 0x1202;/* IF=1, IOPL=1, bit 2 is always 1 */
-			prio    = 15;
+                        t		= task_table + i;
+                        priv	= PRIVILEGE_TASK;	//描述符属性
+                        rpl     = RPL_TASK;	//选择符属性
+                        eflags  = 0x1202;	/* IF=1, IOPL=1, bit 2 is always 1 */
+						prio    = 15;
                 }
                 else {                  /* USER PROC */
-                        t	= user_proc_table + (i - NR_TASKS);
-                        priv	= PRIVILEGE_USER;
-                        rpl     = RPL_USER;
+                        t		= user_proc_table + (i - NR_TASKS);
+                        priv	= PRIVILEGE_USER;	//描述符属性
+                        rpl     = RPL_USER;	//选择符属性
                         eflags  = 0x202;	/* IF=1, bit 2 is always 1 */
-			prio    = 5;
+						prio    = 5;
                 }
 
 		strcpy(p->name, t->name);	/* name of the process */
@@ -89,6 +91,12 @@ PUBLIC int kernel_main()
 				      */
 				  (k_base + k_limit) >> LIMIT_4K_SHIFT,
 				  DA_32 | DA_LIMIT_4K | DA_DRW | priv << 5);
+			/**
+			 * @Note:
+			 * We use 0x0 as cs and d/s/es 's base addr here,
+			 * which is a convenient issue.
+			 * And we adjust child INIT's LDT(cs and d/s/es) at MM::do_fork()
+			 */
 		}
 
 		p->regs.cs = INDEX_LDT_C << 3 |	SA_TIL | rpl;
@@ -128,6 +136,11 @@ PUBLIC int kernel_main()
 	/* 准备键盘中断 */
     init_keyboard();
 
+
+// 测试代码,<Ring0>环境下
+// DEBUG_MEMCPY((char*)0x1400000,"\t",1);//测试结束,OK
+	// BREAK_POINT((void*)restart);//这个没用...
+	// LOG_RECORD("test_ring0 is ok?");//ring0 is ok...
 
 	/* ring0->ring1,开始执行任务 */
 	restart();
@@ -286,7 +299,9 @@ void Init()
 
 	int pid = fork();
 	if (pid != 0) { /* parent process */
+		// LOG_CALLS( p_proc_ready,"before parent print" );
 		printf("parent is running, child pid:%d\n", pid);
+		// LOG_RETS( p_proc_ready, "after parent print");
 		int s;
 		int child = wait(&s);
 		printf("child (%d) exited with status: %d.\n", child, s);

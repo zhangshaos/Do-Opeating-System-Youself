@@ -71,3 +71,11 @@ EXTERN	MESSAGE			    fs_msg;
 EXTERN	PROCESS             *pcaller;
 EXTERN	struct inode *		root_inode;
 extern	const struct dev_drv_map	dd_map[];
+
+
+// log
+// logbuf 使用20MB-30MB地址空间
+extern char * const   logbuf; 
+extern const int      LOGBUF_SIZE;
+extern unsigned int   loglen;
+extern unsigned int   call_stack_pos;

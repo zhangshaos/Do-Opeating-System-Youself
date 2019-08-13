@@ -15,7 +15,7 @@ global  strlen
 
 
 ; ===========================================================
-; 	void* memcpy(void* es:p_dst, void* ds:p_src, int size);
+; 	<RING0> void* memcpy(void* es:p_dst, void* ds:p_src, int size);
 ; ===========================================================
 memcpy:
 	push	ebp
@@ -53,7 +53,7 @@ memcpy:
 
 
 ; ------------------------------------------------------------------------
-; void memset(void* p_dst, char ch, int size);
+; <RING0> void memset(void* p_dst, char ch, int size);
 ; ------------------------------------------------------------------------
 memset:
 	push	ebp
@@ -68,7 +68,7 @@ memset:
 	mov	ecx, [ebp + 16]	; Counter
 .1:
 	cmp	ecx, 0		; 判断计数器
-	jz	.2		; 计数器为零时跳出
+	jz	.2			; 计数器为零时跳出
 
 	mov	byte [edi], dl		; ┓
 	inc	edi			; ┛
@@ -87,7 +87,7 @@ memset:
 
 
 ; ------------------------------------------------------------------------
-; char* strcpy(char* p_dst, char* p_src);
+; <RING0> char* strcpy(char* p_dst, char* p_src);
 ; ------------------------------------------------------------------------
 strcpy:
 	push    ebp
@@ -119,7 +119,7 @@ strcpy:
 
 
 ; ------------------------------------------------------------------------
-; int strlen(char* p_str);
+; <RING0-3> int strlen(char* p_str);
 ; ------------------------------------------------------------------------
 strlen:
         push    ebp

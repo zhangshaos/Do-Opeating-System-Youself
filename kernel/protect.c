@@ -177,8 +177,7 @@ PUBLIC void init_prot()
 	tss.iobase = sizeof(tss); /* No IO permission bitmap */
 
 	/* Fill the LDT descriptors of each proc in GDT  */
-	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
+	for (int i = 0; i < NR_TASKS + NR_PROCS; i++) {
 		memset(&proc_table[i], 0, sizeof(PROCESS));
 
 		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);

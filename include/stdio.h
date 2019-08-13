@@ -7,6 +7,8 @@
  *****************************************************************************
  *****************************************************************************/
 
+#include "type.h"
+
 /* string */
 #define	O_CREAT		1
 #define	O_RDWR		2
@@ -50,7 +52,7 @@ PUBLIC  int     printl(const char *fmt, ...);
 
 /* vsprintf.c */
 PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
-PUBLIC	int	sprintf(char *buf, const char *fmt, ...);
+PUBLIC	int	    sprintf(char *buf, const char *fmt, ...);
 
 /*--------*/
 /* 库函数 */

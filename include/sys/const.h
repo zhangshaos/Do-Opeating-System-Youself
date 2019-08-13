@@ -159,11 +159,11 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define TASK_FS		3
 #define TASK_MM		4
 #define INIT		5
-#define ANY		(NR_TASKS + NR_PROCS + 10)
+#define ANY			(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
 /* system call */
-#define NR_SYS_CALL	3
+#define NR_SYS_CALL	4
 
 /* ipc */
 #define SEND		1

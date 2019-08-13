@@ -19,6 +19,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include "proto.h"
 #include "global.h"
 #include "stdio.h"
+#include "log.h"
 
 PRIVATE void block(PROCESS* p);
 PRIVATE void unblock(PROCESS* p);
@@ -75,6 +76,7 @@ PUBLIC void schedule()
  *****************************************************************************/
 PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p)
 {
+	LOG_CALLS(p,"sys_sdcv");
 	assert(k_reenter == 0);	/* make sure we are not in ring0 */
 	assert((src_dest >= 0 && src_dest < NR_TASKS + NR_PROCS) ||
 	       src_dest == ANY ||
@@ -94,13 +96,13 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p)
 	 * by `send_recv()'.
 	 */
 	if (function == SEND) {
-		// printl("[%d->%d]",p-proc_table,src_dest);
+		LOG_IPC(function,mla->source,src_dest,m);
 		ret = msg_send(p, src_dest, m);
 		if (ret != 0)
 			return ret;
 	}
 	else if (function == RECEIVE) {
-		// printl("[%d<-%d]",p-proc_table,src_dest);
+		LOG_IPC(function,mla->source,src_dest,m);
 		ret = msg_receive(p, src_dest, m);
 		if (ret != 0)
 			return ret;
@@ -110,6 +112,7 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, PROCESS* p)
 		      "%d (SEND:%d, RECEIVE:%d).", function, SEND, RECEIVE);
 	}
 
+	LOG_RETS(p,"sys_sdrv");
 	return 0;
 }
 
@@ -138,17 +141,12 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
 	switch (function) 
 	{
 	case BOTH:
-		// printl("[%d<>%d]",p_proc_ready-proc_table,src_dest);
 		ret = sendrec(SEND, src_dest, msg);
 		if (ret == 0)
 			ret = sendrec(RECEIVE, src_dest, msg);
 		break;
 	case SEND:
 	case RECEIVE:
-		// if(function == SEND)
-		// 	printl("[%d>%d]",p_proc_ready-proc_table,src_dest);
-		// else
-		// 	printl("[%d<%d]",p_proc_ready-proc_table,src_dest);
 		ret = sendrec(function, src_dest, msg);
 		break;
 	default:
@@ -200,6 +198,14 @@ PUBLIC void* va2la(int pid, void* va)
 		assert(la == (u32)va);
 	}
 
+	// if(la != (u32)va)
+	// {
+	// 	printl(" va:%x,la:%x ",(u32)va,la);
+	// }
+	// emmm, printl->sys_print->va2la : 无限递归...
+	// if(la!=(u32)va)
+	// 	LOG_RECORD("va:%x,la:%x",(u32)va,la);
+	
 	return (void*)la;
 }
 

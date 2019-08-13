@@ -21,6 +21,7 @@ extern	clock_handler
 extern	disp_str
 extern	delay
 extern	irq_table
+extern	LOG_NEXT_PROC
 
 ; 导入全局变量
 extern	gdt_ptr
@@ -305,6 +306,7 @@ exception:
 
 
 
+
 ; ====================================================================================
 ;                                   save
 ; ====================================================================================
@@ -384,6 +386,7 @@ sys_call:
 ;第一次中断开始/结束(没有发生中断重入)到这里
 restart:
 	;离开内核栈
+	call 	LOG_NEXT_PROC
 	mov	esp, [p_proc_ready]				;从此开始esp指向的是PCB
 	lldt	[esp + P_LDT_SEL]
 	lea	eax, [esp + P_STACKTOP]

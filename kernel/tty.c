@@ -80,6 +80,7 @@ PUBLIC void task_tty()
 	{
 		for (p_tty = TTY_FIRST; p_tty < TTY_END; p_tty++) 
 		{
+			LOG_RECORD(" tty-%d:dev_read&write ",p_tty-tty_table);
 			do {
 				tty_dev_read(p_tty);
 				tty_dev_write(p_tty);
@@ -101,9 +102,11 @@ PUBLIC void task_tty()
 			send_recv(SEND, src, &msg);
 			break;
 		case DEV_READ:
+			LOG_RECORD(" tty-%d_do_r ",ptty-tty_table);
 			tty_do_read(ptty, &msg);
 			break;
 		case DEV_WRITE:
+			LOG_RECORD(" tty-%d_do_w ",ptty-tty_table);
 			tty_do_write(ptty, &msg);
 			break;
 		case HARD_INT:
@@ -111,6 +114,7 @@ PUBLIC void task_tty()
 			 * waked up by clock_handler -- a key was just pressed
 			 * @see clock_handler() inform_int()
 			 */
+			// LOG_RECORD("hard int to tty\n");
 			key_pressed = 0;
 			continue;	//继续循环tty_dev_read && tty_dev_write
 		default:

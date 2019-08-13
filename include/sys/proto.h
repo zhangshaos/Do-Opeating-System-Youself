@@ -9,6 +9,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #include"tty.h"
 #include"proc.h"
 #include"stdio.h"
+#include "log.h"
 
 /* kliba.asm */
 PUBLIC void	    out_byte(u16 port, u8 value);

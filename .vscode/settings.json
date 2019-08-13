@@ -3,6 +3,8 @@
         "*.cpp": "cpp",
         "stdio.h": "c",
         "const.h": "c",
-        "elf.h": "c"
+        "elf.h": "c",
+        "log.h": "c",
+        "string.h": "c"
     }
 }

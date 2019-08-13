@@ -49,7 +49,7 @@ PUBLIC int do_fork()
 	*p = proc_table[pid];
 	p->ldt_sel = child_ldt_sel;
 	p->p_parent = pid;
-	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
+	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);//修改进程名字
 
 	/* duplicate the process: T, D & S */
 	DESCRIPTOR * ppd;
@@ -99,7 +99,7 @@ PUBLIC int do_fork()
 	       child_base, caller_T_base, caller_T_size);
 	/* child is a copy of the parent */
 	memcpy((void*)child_base, (void*)caller_T_base, caller_T_size);
-	printl("base:%d,size:%d",caller_T_base,caller_T_size);
+	printl("base:0x%x,size:0x%x\n",caller_T_base,caller_T_size);
 
 	/* child's LDT */
 	init_desc(&p->ldts[INDEX_LDT_C],
