@@ -105,9 +105,9 @@ typedef struct task {
  * @see global.c
  * @see global.h
  */
-#define	PROCS_BASE		0xA00000 /* 10 MB */
+#define	PROCS_BASE				0xA00000 /* 10 MB */
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
-#define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
+#define	PROC_ORIGIN_STACK		0x400    /*  1 KB */
 
 /* stacks of tasks */
 #define	STACK_SIZE_DEFAULT	0x4000 /* 16 KB */

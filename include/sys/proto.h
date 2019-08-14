@@ -111,7 +111,8 @@ PUBLIC void		do_exit(int status);
 PUBLIC void		do_wait();
 
 /* mm/exec.c */
-/* PUBLIC int		do_exec(); */
+PUBLIC int		do_exec();
+
 /* console.c */
 PUBLIC void     out_char(CONSOLE* p_con, char ch);
 PUBLIC void     scroll_screen(CONSOLE* p_con, int direction);

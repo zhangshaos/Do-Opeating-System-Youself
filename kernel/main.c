@@ -340,7 +340,7 @@ void untar(const char * filename)
 		int fdout = open(phdr->name, O_CREAT | O_RDWR);
 		if (fdout == -1) {
 			printf("    failed to extract file: %s\n", phdr->name);
-			printf(" aborted]\n");
+			printf(" aborted]");
 			return;
 		}
 		printf("    %s (%d bytes)\n", phdr->name, f_len);
@@ -378,12 +378,8 @@ void Init()
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");
 
-#if 0
 	int pid = fork();
 	if (pid != 0) { /* parent process */
-		// LOG_CALLS( p_proc_ready,"before parent print" );
-		printf("parent is running, child pid:%d\n", pid);
-		// LOG_RETS( p_proc_ready, "after parent print");
 		int s;
 		int child = wait(&s);
 		printf("child (%d) exited with status: %d.\n", child, s);
@@ -397,8 +393,8 @@ void Init()
 		int child = wait(&s);
 		printf("child (%d) exited with status: %d.\n", child, s);
 	}
-#endif
-	spin("Init");
+
+	assert(0);
 
 }
 

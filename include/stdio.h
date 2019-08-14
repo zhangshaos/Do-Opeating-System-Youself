@@ -7,6 +7,9 @@
  *****************************************************************************
  *****************************************************************************/
 
+#ifndef __STDIO_H__
+#define __STDIO_H__
+
 #include "type.h"
 
 /* string */
@@ -19,6 +22,20 @@
 
 #define	MAX_PATH	128
 
+
+
+
+/**
+ * @struct stat
+ * @brief  File status, returned by syscall stat();
+ */
+struct stat {
+	int st_dev;		/* major/minor device number */
+	int st_ino;		/* i-node number */
+	int st_mode;		/* file mode, protection bits, etc. */
+	int st_rdev;		/* device ID (if special file) */
+	int st_size;		/* file size */
+};
 /*========================*
  * printf, printl, printx *
  *========================*
@@ -85,6 +102,15 @@ PUBLIC void	exit		(int status);
 /* lib/wait.c */
 PUBLIC int	wait		(int * status);
 
+/* lib/exec.c */
+PUBLIC int	exec		(const char * path);
+PUBLIC int	execl		(const char * path, const char *arg, ...);
+PUBLIC int	execv		(const char * path, char * argv[]);
+
+/* lib/stat.c */
+PUBLIC int	stat		(const char *path, struct stat *buf);
+
 /* lib/syslog.c */
 PUBLIC	int	syslog		(const char *fmt, ...);
 
+#endif

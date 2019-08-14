@@ -74,9 +74,9 @@ PUBLIC void task_fs()
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
 		/* 	break; */
-		/* case STAT: */
-		/* 	fs_msg.RETVAL = do_stat(); */
-		/* 	break; */
+		case STAT:
+			fs_msg.RETVAL = do_stat();
+			break;
 		default:
 			dump_msg("FS::unknown message:", &fs_msg);
 			assert(0);
