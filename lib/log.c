@@ -3,14 +3,13 @@
  *          You can rocord log in memory, and write memory to log files
  *          with bochs' command: "writemem" 
  */
-
+#include "Settings.h"
 #include "stdio.h"
 #include "string.h"
 #include "proto.h"
 #include "type.h"
 #include "global.h"
 #include "log.h"
-
 
 
 
@@ -23,26 +22,43 @@
 //          because write directly memory...
 int LOG_SPRINTF(char *buf, const char *fmt, ...)
 {
+    #ifdef USE_LOG
+
 	va_list arg = (va_list)((char*)(&fmt) + 4);        /* 4 是参数 fmt 所占堆栈中的大小 */
 	return DEBUG_VSPRINTF(buf, fmt, arg);
+
+    #endif
+    #ifndef USE_LOG
+    return 0;
+    #endif
 }
 
 void LOG_RECORD(const char *fmt,...)
 {
+    #ifdef USE_LOG
+
     va_list arg = (va_list)((char*)(&fmt) + 4);
     /* loglen += */ DEBUG_VSPRINTF(logbuf + loglen,fmt,arg);
+
+    #endif
 }
 
 // 这个函数仅仅被restart()调用, 用来记录进程调度后, 执行流的去向
 void LOG_NEXT_PROC()
 {
+    #ifdef USE_LOG
+
     const char *p_name = p_proc_ready->name;
     /* loglen += */ LOG_SPRINTF(logbuf + loglen,"Next:%s\n",p_name);
     assert(loglen < LOGBUF_SIZE);
+
+    #endif
 }
 
  void LOG_CALLS(PROCESS *p, const char *func_name)
 {
+    #ifdef USE_LOG
+
     // process status
     const char * status;
     switch (p->p_flags)
@@ -80,10 +96,14 @@ void LOG_NEXT_PROC()
     ++call_stack_pos; //增加下一个函数调用的缩进
     /* loglen += */ LOG_SPRINTF(logbuf + loglen,"%s-%s:%s(\n",p->name,status ,func_name);
     assert(loglen < LOGBUF_SIZE);
+
+    #endif
 }
 
  void LOG_RETS(PROCESS *p, const char *func_name)
 {
+    #ifdef USE_LOG
+
     // process status
     const char * status;
     switch (p->p_flags)
@@ -121,10 +141,14 @@ void LOG_NEXT_PROC()
     }
     /* loglen += */ LOG_SPRINTF(logbuf + loglen,")%s(%s-%s)\n",func_name,p->name,status);
     assert(loglen < LOGBUF_SIZE);
+
+    #endif
 }
 
  void LOG_IPC(int function,int p_source,int p_dest,MESSAGE *pmsg)
 {
+    #ifdef USE_LOG
+
     // const char *source_name = p_source < NR_TASKS ? task_table[p_source].name : user_proc_table[p_source-NR_TASKS].name;
     const char *source_name,*dest_name;
 
@@ -339,6 +363,8 @@ void LOG_NEXT_PROC()
     }
     /* loglen += */ LOG_SPRINTF(logbuf + loglen,"[%s %s %s(%s) : %s]\n",source_name,func_name,dest_name, dest_status,msg_type);
     assert(loglen < LOGBUF_SIZE);
+
+    #endif
 }
 
 
@@ -353,14 +379,25 @@ void LOG_NEXT_PROC()
 // <Ring0>
 void sys_debug_memcpy(char *dest, const char *source, int count, MESSAGE * unused)
 {
+    #ifdef USE_LOG
+
     memcpy( (void*)dest,(void*)source, count );
+
+    #endif
 }
 
 int sys_debug_vsprintf(char *buf, const char *fmt, va_list args, MESSAGE *unused)
 {
+    #ifdef USE_LOG
+
     int ret = vsprintf(buf,fmt,args);
     loglen += ret;  //提前增加loglen,否则restart(ring0->ring1-3)时,LOG_NEXT_PROC()会重复读写loglen长度.
-   return ret;
+    return ret;
+
+    #endif
+    #ifndef USE_LOG
+    return 0;
+    #endif
 }
 
 // void sys_break_point(int unused1, int unused2, void *ea,PROCESS *p)

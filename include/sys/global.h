@@ -13,6 +13,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 #define	EXTERN
 #endif
 
+#include "Settings.h"
 #include  "type.h"
 #include "tty.h"
 #include "fs.h"
@@ -79,7 +80,9 @@ extern	const struct dev_drv_map	dd_map[];
 
 // log
 // logbuf 使用20MB-30MB地址空间
+#ifdef USE_LOG
 extern char * const   logbuf; 
 extern const int      LOGBUF_SIZE;
 extern unsigned int   loglen;
 extern unsigned int   call_stack_pos;
+#endif

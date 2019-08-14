@@ -8,6 +8,7 @@ Other:			参见<Orange's 一个操作系统的实现>
 
 #define GLOBAL_VARIABLES_HERE
 
+#include "Settings.h"
 #include "type.h"
 #include "const.h"
 #include "protect.h"
@@ -98,7 +99,9 @@ PUBLIC	const int	MMBUF_SIZE	= 0x100000;
 
 // log
 // logbuf 使用20MB-30MB地址空间
+#ifdef USE_LOG
 PUBLIC char * const   logbuf      =   (char*)0x1400000; 
 PUBLIC const int      LOGBUF_SIZE =   0xa00000;
 PUBLIC unsigned int   loglen      =   1;
 PUBLIC unsigned int   call_stack_pos   = 1;   
+#endif
