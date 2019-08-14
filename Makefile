@@ -32,13 +32,14 @@ OBJS		= kernel/kernel.o lib/syscall.o kernel/start.o kernel/main.o\
 			lib/kliba.o lib/klib.o lib/string.o lib/misc.o lib/getpid.o\
 			lib/open.o lib/close.o lib/read.o lib/write.o lib/unlink.o\
 			lib/fork.o lib/wait.o lib/exit.o\
+			lib/send_recv.o\
 			lib/log.o\
 			fs/main.o fs/open.o fs/misc.o fs/link.o fs/read_write.o\
 			mm/forkexit.o mm/main.o 
 DASMOUTPUT	= kernel.bin.asm
 
 # All Phony Targets
-.PHONY : everything final image clean realclean disasm all buildimg
+.PHONY : everything final image clean realclean disasm all buildimg crt
 
 # Default starting position
 nop :
@@ -66,6 +67,10 @@ buildimg :
 	sudo cp -fv boot/loader.bin /mnt/floppy/
 	sudo cp -fv kernel.bin /mnt/floppy
 	sudo umount /mnt/floppy
+
+crt:	lib/syscall.o lib/string.o lib/open.o lib/read.o lib/write.o lib/close.o lib/unlink.o lib/fork.o lib/exit.o lib/wait.o lib/getpid.o lib/misc.o lib/vsprintf.o lib/printf.o lib/send_recv.o 
+		ar rcs lib/mycrt.a $^
+
 
 boot/boot.bin : boot/boot.asm boot/include/load.inc boot/include/fat12hdr.inc
 	$(ASM) $(ASMBFLAGS) -o $@ $<
@@ -185,4 +190,7 @@ lib/exit.o:	lib/exit.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 lib/log.o:	lib/log.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+lib/send_recv.o:	lib/send_recv.c
 	$(CC) $(CFLAGS) -o $@ $<
