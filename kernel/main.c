@@ -323,31 +323,39 @@ void untar(const char * filename)
 	char buf[SECTOR_SIZE * 16];
 	int chunk = sizeof(buf);
 
-	while (1) {
+	while (1) 
+	{
+		// 读取tar文件头到buf
 		read(fd, buf, SECTOR_SIZE);
 		if (buf[0] == 0)
 			break;
 
+		// tar包实际上就是一个(512字节的头文件+文件)+(头文件+文件)+...叠放在一起
 		struct posix_tar_header * phdr = (struct posix_tar_header *)buf;
 
 		/* calculate the file size */
 		char * p = phdr->size;
 		int f_len = 0;
 		while (*p)
+		{
 			f_len = (f_len * 8) + (*p++ - '0'); /* octal */
+		}
 
 		int bytes_left = f_len;
 		int fdout = open(phdr->name, O_CREAT | O_RDWR);
-		if (fdout == -1) {
+		if (fdout == -1) 
+		{
 			printf("    failed to extract file: %s\n", phdr->name);
 			printf(" aborted]");
 			return;
 		}
 		printf("    %s (%d bytes)\n", phdr->name, f_len);
-		while (bytes_left) {
+		while (bytes_left) 
+		{
 			int iobytes = min(chunk, bytes_left);
-			read(fd, buf,
-			     ((iobytes - 1) / SECTOR_SIZE + 1) * SECTOR_SIZE);
+			// 读取tar包中放在文件头后面的真实文件
+			read(fd, buf, ((iobytes - 1) / SECTOR_SIZE + 1) * SECTOR_SIZE);
+			// 将解tar包后的真实文件写回硬盘中
 			write(fdout, buf, iobytes);
 			bytes_left -= iobytes;
 		}
@@ -357,6 +365,80 @@ void untar(const char * filename)
 	close(fd);
 
 	printf(" done]\n");
+}
+
+/*****************************************************************************
+ *                                shabby_shell
+ *****************************************************************************/
+/**
+ * A very very simple shell.
+ * 
+ * @param tty_name  TTY file name.
+ *****************************************************************************/
+void shabby_shell(const char * tty_name)
+{
+	int fd_stdin  = open(tty_name, O_RDWR);
+	assert(fd_stdin  == 0);
+	int fd_stdout = open(tty_name, O_RDWR);
+	assert(fd_stdout == 1);
+
+	char rdbuf[128];
+
+	while (1) 
+	{
+		write(1, "$ ", 2);
+		int r = read(0, rdbuf, 70);
+		rdbuf[r] = 0;
+
+		int argc = 0;
+		char * argv[PROC_ORIGIN_STACK];
+		char * p_cmd = rdbuf;
+		char * tmp;
+		int word = 0; // 表示现在p_cmd指向字符串(用户键入shell的参数)
+		char ch;
+		do {
+			ch = *p_cmd;
+			if (*p_cmd != ' ' && *p_cmd != 0 && !word) {
+				// 当p_cmd指向键入shell的参数时
+				tmp = p_cmd;
+				word = 1;
+			}
+			if ((*p_cmd == ' ' || *p_cmd == 0) && word) {
+				// 当p_cmd扫描完整个字符串参数后
+				word = 0;
+				argv[argc++] = tmp;
+				*p_cmd = 0;
+			}
+			p_cmd++;
+		} while(ch);
+		
+		argv[argc] = 0;
+
+		int fd = open(argv[0], O_RDWR);// 打开cmd命令所对应的文件
+		if (fd == -1) {
+			if (rdbuf[0]) {
+				write(1, "{", 1);
+				write(1, rdbuf, r);
+				write(1, "}\n", 2);
+			}
+		}
+		else {
+			// Q:为什么打开后立即关闭?
+			// A:打开关闭只是为了测试cmd命令是否存在
+			close(fd);
+			int pid = fork();
+			if (pid != 0) { /* parent */
+				int s;
+				wait(&s);
+			}
+			else {	/* child */
+				execv(argv[0], argv);
+			}
+		}
+	}
+
+	close(1);
+	close(0);
 }
 
 /*****************************************************************************
@@ -377,18 +459,29 @@ void Init()
 
 	/* extract `cmd.tar' */
 	untar("/cmd.tar");
+			
 
-	int pid = fork();
-	if (pid != 0) { /* parent process */
-		int s;
-		int child = wait(&s);
-		printf("child (%d) exited with status: %d.\n", child, s);
-	}
-	else {	/* child process */
-		execl("/echo", "echo", "hello", "world", 0);
+	char * tty_list[] = {"/dev_tty1", "/dev_tty2"};
+
+	for (int i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) 
+	{
+		int pid = fork();
+		if (pid != 0) { /* parent process */
+			printf("[parent is running, child pid:%d]\n", pid);
+		}
+		else {	/* child process */
+			printf("[child is running, pid:%d]\n", getpid());
+			// 子进程不继承父进程的打开文件
+			close(fd_stdin);
+			close(fd_stdout);
+			
+			shabby_shell(tty_list[i]);
+			assert(0);
+		}
 	}
 
-	while (1) {
+	while (1) 
+	{
 		int s;
 		int child = wait(&s);
 		printf("child (%d) exited with status: %d.\n", child, s);

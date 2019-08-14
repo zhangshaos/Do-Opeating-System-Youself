@@ -57,7 +57,7 @@ PUBLIC int do_exec()
 	int fd = open(pathname, O_RDWR);
 	if (fd == -1)
 		return -1;
-	assert(s.st_size < MMBUF_SIZE);
+	assert(s.st_size < MMBUF_SIZE);	// 暂时还加载不了大于1M的exe image
 	read(fd, mmbuf, s.st_size);
 	close(fd);
 
@@ -65,11 +65,14 @@ PUBLIC int do_exec()
 	Elf32_Ehdr* elf_hdr = (Elf32_Ehdr*)(mmbuf);
 	for (int i = 0; i < elf_hdr->e_phnum; i++) 
 	{
+		// 读取segment头
 		Elf32_Phdr* prog_hdr = (Elf32_Phdr*)(mmbuf + elf_hdr->e_phoff +
 			 					(i * elf_hdr->e_phentsize));
 		if (prog_hdr->p_type == PT_LOAD) 
 		{
 			assert(prog_hdr->p_vaddr + prog_hdr->p_memsz < PROC_IMAGE_SIZE_DEFAULT);
+			// 将mmbuf中的LOAD SEGMENT加载到src(调用进程)的地址空间中
+			// 注意, 加载地址正确的前提是task_mm的段描述符基址是0,私以为这段复制地址代码可以放在<Ring0>中执行也可以
 			phys_copy((void*)va2la(src, (void*)prog_hdr->p_vaddr),
 				  		(void*)va2la(TASK_MM, mmbuf + prog_hdr->p_offset),
 						prog_hdr->p_filesz);
@@ -85,9 +88,10 @@ PUBLIC int do_exec()
 
 // 为什么进程使用这个栈, 不应该使用自己的进程栈吗?
 // 而且, 这个栈貌似是多个进程公用!
+// 原因参见下面line 108
 	u8 * orig_stack = (u8*)(PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK);
 
-	//@delta:用来重定位参数栈中的字符串指针
+	//@delta: 用来重定位参数栈中的字符串指针
 	int delta = (int)orig_stack - (int)mm_msg.BUF;
 
 	int argc = 0;
@@ -95,9 +99,12 @@ PUBLIC int do_exec()
 	{
 		char **q = (char**)stackcopy;
 		for (; *q != 0; q++,argc++)
+		{
 			*q += delta;
+		}
 	}
 
+// 重定位后的参数栈复制回src(调用进程)的进程空间中的orig_stack
 	phys_copy((void*)va2la(src, orig_stack),
 		  (void*)va2la(TASK_MM, stackcopy),
 		  orig_stack_len);
@@ -106,7 +113,7 @@ PUBLIC int do_exec()
 	proc_table[src].regs.ecx = argc; /* argc */
 	proc_table[src].regs.eax = (u32)orig_stack; /* argv */
 
-	// @9 setup eip & esp 
+	// @9: setup eip & esp 
 	proc_table[src].regs.eip = elf_hdr->e_entry; /* @see _start.asm */
 	proc_table[src].regs.esp = PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK;
 

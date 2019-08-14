@@ -35,7 +35,7 @@ PUBLIC int do_rdwt()
 	if (!(pcaller->filp[fd]->fd_mode & O_RDWR))
 		return 0;
 
-	int pos = pcaller->filp[fd]->fd_pos;
+	int pos = pcaller->filp[fd]->fd_pos;// fd_pos记录了上次读写的位置
 
 	struct inode * pin = pcaller->filp[fd]->fd_inode;
 
